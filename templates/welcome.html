@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="welcome">
+  <h2>Welcome to Pest Watch</h2>
+  <p>A smart agricultural pest detection and reporting system.</p>
+
+  <div style="margin-top:18px;">
+    <a href="{{ url_for('login') }}" class="btn">Login</a>
+    <a href="{{ url_for('register') }}" class="btn btn-secondary">Register</a>
+  </div>
+</div>
+
+{% endblock %}

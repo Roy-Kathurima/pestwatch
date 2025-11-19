@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Admin Dashboard</h2>
+
+<p>Total reports: {{ total }} | Verified: {{ verified_count }}</p>
+
+<div style="margin-bottom:12px;">
+  <button onclick="toggleHeat()" class="btn">Toggle Heatmap</button>
+  <button onclick="reloadReports()" class="btn btn-secondary">Reload</button>
+</div>
+
+<div id="adminMap" style="height:420px; border:1px solid #ddd; margin-bottom:14px;"></div>
+
+<h3>Reports</h3>
+<table class="data-table" id="reportsTable">
+  <thead>
+    <tr><th>ID</th><th>User</th><th>Severity</th><th>Verified</th><th>Date</th><th>Action</th></tr>
+  </thead>
+  <tbody>
+    {% for r in reports %}
+    <tr data-id="{{ r.id }}" data-lat="{{ r.latitude }}" data-lon="{{ r.longitude }}">
+      <td>{{ r.id }}</td>
+      <td>{{ r.farmer.fullname if r.farmer else 'Unknown' }}</td>
+      <td>{{ r.severity }}</td>
+      <td>{{ 'Yes' if r.verified else 'No' }}</td>
+      <td>{{ r.created_at }}</td>
+      <td>
+        <button onclick="goToLocation({{ r.latitude }}, {{ r.longitude }})">Go to</button>
+        <button onclick="openFeedbackModal({{ r.id }})">Feedback</button>
+        <button onclick="toggleVerify({{ r.id }})">{{ 'Unverify' if r.verified else 'Verify' }}</button>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<!-- Feedback modal (simple) -->
+<div id="feedbackModal" style="display:none; position:fixed; left:0; top:0; right:0; bottom:0; background:rgba(0,0,0,0.5);">
+  <div style="background:white; width:520px; max-width:95%; margin:80px auto; padding:16px; border-radius:6px;">
+    <h3>Send Feedback</h3>
+    <input type="hidden" id="feedbackReportId">
+    <textarea id="feedbackText" style="width:100%; height:120px;"></textarea>
+    <div style="margin-top:8px; text-align:right;">
+      <button onclick="closeFeedbackModal()" class="btn btn-secondary">Cancel</button>
+      <button onclick="sendFeedback()" class="btn">Send</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.min.js"></script>
+<script>
+const ICONS = {
+  Low: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+  Moderate: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png',
+  Severe: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+  Critical: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-violet.png'
+};
+const ICON_SHADOW = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-shadow.png';
+function makeIcon(url){
+  return L.icon({iconUrl:url, shadowUrl: ICON_SHADOW, iconSize:[25,41], iconAnchor:[12,41], popupAnchor:[1,-34], shadowSize:[41,41]});
+}
+const icons = {
+  Low: makeIcon(ICONS.Low),
+  Moderate: makeIcon(ICONS.Moderate),
+  Severe: makeIcon(ICONS.Severe),
+  Critical: makeIcon(ICONS.Critical)
+};
+
+var map = L.map('adminMap').setView([0.3,37.7],6);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+let markers = [];
+let heatLayer = null;
+
+function reloadReports(){
+  fetch('/api/reports').then(r=>r.json()).then(data=>{
+    // clear markers
+    markers.forEach(m => map.removeLayer(m)); markers = [];
+    let heatPoints = [];
+    data.forEach(rep=>{
+      if (!rep.lat || !rep.lon) return;
+      const icon = icons[rep.severity] || icons.Low;
+      const m = L.marker([rep.lat, rep.lon], {icon:icon}).addTo(map);
+      let popup = `<b>ID:</b> ${rep.id}<br><b>User:</b> ${rep.user}<br><b>Severity:</b> ${rep.severity}<br><b>Verified:</b> ${rep.verified ? 'Yes' : 'No'}<br><b>Date:</b> ${rep.created_at}<br>${rep.description || ''}`;
+      if (rep.image) popup += `<br><img src="${rep.image}" width="160" style="margin-top:6px;">`;
+      m.bindPopup(popup);
+      markers.push(m);
+      // weight by severity
+      let w = rep.severity === 'Critical' ? 1.0 : rep.severity === 'Severe' ? 0.8 : rep.severity === 'Moderate' ? 0.5 : 0.2;
+      heatPoints.push([rep.lat, rep.lon, w]);
+    });
+    if (heatLayer) heatLayer.setLatLngs(heatPoints);
+    else heatLayer = L.heatLayer(heatPoints, {radius:25, blur:15, maxZoom:17}).addTo(map);
+  });
+}
+
+function goToLocation(lat, lon){
+  map.setView([lat, lon], 14);
+  // open popup for the first marker at those coords
+  for (let m of markers){
+    const p = m.getLatLng();
+    if (Math.abs(p.lat - lat) < 1e-6 && Math.abs(p.lng - lon) < 1e-6){
+      m.openPopup();
+      return;
+    }
+  }
+}
+
+function toggleVerify(id){
+  fetch('/admin/toggle_verify/'+id, {method:'POST'}).then(r=>r.json()).then(j=>{
+    if (j.success) {
+      reloadReports();
+      setTimeout(()=>location.reload(),500);
+    } else alert('Error toggling verify');
+  });
+}
+
+function openFeedbackModal(id){
+  document.getElementById('feedbackReportId').value = id;
+  document.getElementById('feedbackText').value = '';
+  document.getElementById('feedbackModal').style.display = 'block';
+}
+
+function closeFeedbackModal(){
+  document.getElementById('feedbackModal').style.display = 'none';
+}
+
+function sendFeedback(){
+  const id = document.getElementById('feedbackReportId').value;
+  const fb = document.getElementById('feedbackText').value;
+  fetch('/admin/feedback/'+id, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({feedback:fb})})
+    .then(r=>r.json()).then(j=>{
+      if (j.success){
+        closeFeedbackModal();
+        reloadReports();
+        setTimeout(()=>location.reload(),500);
+      } else alert('Error saving feedback');
+    });
+}
+
+function toggleHeat(){
+  if (!heatLayer) return;
+  if (map.hasLayer(heatLayer)) map.removeLayer(heatLayer);
+  else map.addLayer(heatLayer);
+}
+
+// initial load
+reloadReports();
+
+</script>
+
+{% endblock %}
