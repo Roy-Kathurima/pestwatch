@@ -3,36 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pest Watch</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>PestWatch</title>
+
+    <!-- GOOGLE FONTS -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: "Poppins", sans-serif;
+            background: linear-gradient(135deg, #0b6623, #228B22, #6dbf57);
+            background-size: 300% 300%;
+            animation: gradientMove 12s ease infinite;
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .navbar {
+            width: 100%;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.25);
+            backdrop-filter: blur(6px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .brand {
+            font-size: 28px;
+            font-weight: 700;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .nav-links a {
+            margin-left: 20px;
+            padding: 8px 16px;
+            border-radius: 6px;
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        .nav-links a:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .container {
+            margin: 60px auto;
+            width: 90%;
+            max-width: 900px;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 30px;
+            border-radius: 16px;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 0 25px rgba(0,0,0,0.2);
+        }
+
+        h1, h2, h3 {
+            text-align: center;
+            color: #fff;
+        }
+
+        .btn {
+            background: #1b5e20;
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: 600;
+            text-align: center;
+            transition: 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #145316;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0 20px 0;
+            border-radius: 6px;
+            border: none;
+            outline: none;
+            font-size: 15px;
+        }
+
+        label {
+            font-weight: 600;
+            color: #fff;
+        }
+    </style>
 </head>
+
 <body>
 
-    <header>
-        <h1 class="brand">
-            <a href="{{ url_for('home') }}">Pest Watch</a>
-        </h1>
+    <!-- NAVBAR -->
+    <div class="navbar">
+        <a class="brand" href="{{ url_for('home') }}">PestWatch</a>
 
-        <nav>
-            <ul>
-                <li><a href="{{ url_for('home') }}">Home</a></li>
+        <div class="nav-links">
+            {% if session.get('user_id') %}
+                <a href="{{ url_for('dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('logout') }}">Logout</a>
+            {% else %}
+                <a href="{{ url_for('login') }}">Login</a>
+                <a href="{{ url_for('register') }}">Register</a>
+            {% endif %}
+        </div>
+    </div>
 
-                {% if session.get('user_id') %}
-                    <li><a href="{{ url_for('user_dashboard') }}">Dashboard</a></li>
-                    <li><a href="{{ url_for('logout') }}">Logout</a></li>
-                {% else %}
-                    <li><a href="{{ url_for('login') }}">Login</a></li>
-                    <li><a href="{{ url_for('register') }}">Register</a></li>
-                {% endif %}
-
-                <li><a href="{{ url_for('admin_login') }}" style="color:red;">Admin</a></li>
-            </ul>
-        </nav>
-    </header>
-
-    <main>
+    <!-- MAIN CONTENT -->
+    <div class="container">
         {% block content %}{% endblock %}
-    </main>
+    </div>
 
 </body>
 </html>
