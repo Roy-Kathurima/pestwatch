@@ -1,54 +1,51 @@
 {% extends "base.html" %}
 {% block content %}
-
 <h2>Submit Pest Report</h2>
 
-<form method="POST" enctype="multipart/form-data" class="form-box">
-    <label>Description of Pest</label>
+<form method="POST" enctype="multipart/form-data">
+  <div style="max-width:700px;">
+    <label>Description</label>
     <textarea name="description" required></textarea>
 
     <label>Severity</label>
     <select name="severity" required>
-        <option value="Low">Low infestation</option>
-        <option value="Moderate">Moderate infestation</option>
-        <option value="Severe">Severe infestation</option>
-        <option value="Critical">Critical outbreak</option>
+      <option value="Low">Low infestation</option>
+      <option value="Moderate">Moderate infestation</option>
+      <option value="Severe">Severe infestation</option>
+      <option value="Critical">Critical outbreak</option>
     </select>
 
-    <label>Image (photo)</label>
+    <label>Image</label>
     <input type="file" name="image" accept="image/*" required>
 
     <label>Latitude</label>
-    <input type="text" id="lat" name="latitude" readonly required>
+    <input id="lat" name="latitude" readonly required>
 
     <label>Longitude</label>
-    <input type="text" id="lon" name="longitude" readonly required>
+    <input id="lon" name="longitude" readonly required>
 
-    <div style="display:flex; gap:10px; align-items:center;">
+    <p>
       <button type="button" class="btn" onclick="openMap()">Select Location</button>
-      <button type="button" class="btn btn-secondary" onclick="useMyLocation()">Use My Location</button>
-      <button type="submit" class="btn btn-success">Submit Report</button>
-    </div>
+      <button type="button" class="btn btn-secondary" onclick="useMyLocation()">Use my device location</button>
+      <button type="submit" class="btn" style="margin-left:12px;">Submit Report</button>
+    </p>
+
+    <div id="mapBox" style="display:none; width:100%; height:400px; border:1px solid #ddd; margin-top:12px;"></div>
+  </div>
 </form>
 
-<div id="mapBox" style="display:none; height:400px; margin-top:12px; border:1px solid #ddd;"></div>
-
 <script>
-let map;
-let marker;
-
+let map, marker;
 function openMap(){
-  document.getElementById('mapBox').style.display = 'block';
+  document.getElementById('mapBox').style.display='block';
   if (!map){
-    map = L.map('mapBox').setView([0.3, 37.7], 6);
+    map = L.map('mapBox').setView([0.3,37.7],6);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
     map.on('click', function(e){
-      const lat = e.latlng.lat.toFixed(6);
-      const lon = e.latlng.lng.toFixed(6);
+      const lat = e.latlng.lat.toFixed(6), lon = e.latlng.lng.toFixed(6);
       document.getElementById('lat').value = lat;
       document.getElementById('lon').value = lon;
-      if (marker) marker.setLatLng(e.latlng);
-      else marker = L.marker(e.latlng).addTo(map);
+      if (marker) marker.setLatLng(e.latlng); else marker = L.marker(e.latlng).addTo(map);
     });
   }
 }
@@ -56,17 +53,10 @@ function openMap(){
 function useMyLocation(){
   if (!navigator.geolocation){ alert('Geolocation not supported'); return; }
   navigator.geolocation.getCurrentPosition(function(pos){
-    const lat = pos.coords.latitude.toFixed(6);
-    const lon = pos.coords.longitude.toFixed(6);
+    const lat = pos.coords.latitude.toFixed(6), lon = pos.coords.longitude.toFixed(6);
     document.getElementById('lat').value = lat;
     document.getElementById('lon').value = lon;
-    if (!map) openMap();
-    const latlng = L.latLng(lat, lon);
-    if (marker) marker.setLatLng(latlng);
-    else marker = L.marker(latlng).addTo(map);
-    map.setView(latlng, 14);
-  }, function(){ alert('Could not get location'); });
+  }, function(){ alert('Cannot get location') });
 }
 </script>
-
 {% endblock %}
