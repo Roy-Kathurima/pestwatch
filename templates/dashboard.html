@@ -1,34 +1,20 @@
 {% extends "base.html" %}
 {% block content %}
-
 <h2>Welcome, {{ user.fullname }}</h2>
-
-<p>
-  <a href="{{ url_for('report') }}" class="btn">Submit New Report</a>
-  <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
-</p>
+<p><a class="btn" href="{{ url_for('report') }}">Submit New Report</a> <a class="btn btn-danger" href="{{ url_for('logout') }}">Logout</a></p>
 
 <h3>Your Reports</h3>
-{% if reports %}
-  <table class="data-table">
-    <thead>
-      <tr><th>ID</th><th>Description</th><th>Severity</th><th>Status</th><th>Date</th><th>Feedback</th></tr>
-    </thead>
-    <tbody>
-      {% for r in reports %}
-      <tr>
-        <td>{{ r.id }}</td>
-        <td>{{ r.description }}</td>
-        <td>{{ r.severity }}</td>
-        <td>{{ r.status }}</td>
-        <td>{{ r.created_at }}</td>
-        <td>{{ r.admin_feedback or "No feedback yet" }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-{% else %}
-  <p>You have no reports yet.</p>
-{% endif %}
-
+<table class="data-table">
+  <tr><th>ID</th><th>Desc</th><th>Severity</th><th>Verified</th><th>Feedback</th><th>Date</th></tr>
+  {% for r in reports %}
+  <tr>
+    <td>{{ r.id }}</td>
+    <td>{{ r.description }}</td>
+    <td>{{ r.severity }}</td>
+    <td>{{ 'Yes' if r.verified else 'No' }}</td>
+    <td>{{ r.admin_feedback or '—' }}</td>
+    <td>{{ r.created_at }}</td>
+  </tr>
+  {% endfor %}
+</table>
 {% endblock %}
