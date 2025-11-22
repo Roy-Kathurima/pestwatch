@@ -8,7 +8,7 @@ body { font-family: Arial, sans-serif; margin:0; padding:0; background:#f6f6f6; 
 .form-box input, .form-box textarea, .form-box select { display:block; width:100%; padding:8px; margin-bottom:10px; border:1px solid #ccc; border-radius:4px; }
 .btn { background:#2a8f4c; color:white; padding:8px 12px; border:none; border-radius:5px; cursor:pointer; text-decoration:none; display:inline-block; }
 .btn-secondary { background:#6c757d; color:white; padding:8px 12px; border:none; border-radius:5px; cursor:pointer; }
-.btn-danger { background:#c0392b; color:white; padding:8px 12px; border:none; border-radius:5px; cursor:pointer; }
+.btn-danger { background:#c0392b; color:white; padding:8px 12px; border:none; border-radius:5px; }
 .flashes { margin:12px 0;}
 .flash { background:#fff8e1; border-left:4px solid #ffd54f; padding:8px; margin-bottom:8px; }
 .data-table { width:100%; border-collapse:collapse; background:white; }
