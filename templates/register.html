@@ -1,19 +1,12 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Create Farmer Account</h2>
-
-<form method="POST" class="form-box">
-  <label>Full Name</label>
-  <input name="fullname" required>
-
-  <label>Email</label>
-  <input name="email" type="email" required>
-
-  <label>Password</label>
-  <input name="password" type="password" required>
-
-  <button type="submit" class="btn">Register</button>
-</form>
-
-<p>Already registered? <a href="{{ url_for('login') }}">Login here</a></p>
+<div class="form-box">
+  <h2>Register</h2>
+  <form method="POST">
+    <input name="fullname" placeholder="Full name" required>
+    <input name="email" type="email" placeholder="Email" required>
+    <input name="password" type="password" placeholder="Password" required>
+    <button class="btn" type="submit">Register</button>
+  </form>
+</div>
 {% endblock %}
