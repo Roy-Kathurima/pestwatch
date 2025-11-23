@@ -31,7 +31,6 @@ class Report(db.Model):
 
     severity = db.Column(db.String(50), default='Low')   # Low, Moderate, Severe, Critical
     verified = db.Column(db.Boolean, default=False)
-
-    status = db.Column(db.String(50), default='new')
+    status = db.Column(db.String(50), default='new')     # new, in_progress, resolved
     admin_feedback = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
