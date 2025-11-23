@@ -1,5 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
-<h3>Thank you — your report was submitted.</h3>
-<p><a class="btn" href="{{ url_for('dashboard') }}">Back to dashboard</a></p>
+<div class="form-box">
+  <h3>Thanks — report received</h3>
+  <p>We will review the report.</p>
+  <a class="btn" href="{{ url_for('user_dashboard') }}">Back to Dashboard</a>
+</div>
 {% endblock %}
