@@ -1,20 +1,26 @@
 {% extends "base.html" %}
 {% block content %}
 <h2>Welcome, {{ user.fullname }}</h2>
-<p><a class="btn" href="{{ url_for('report') }}">Submit New Report</a> <a class="btn btn-danger" href="{{ url_for('logout') }}">Logout</a></p>
+
+<p>
+  <a class="btn" href="{{ url_for('report') }}">Submit New Report</a>
+  <a class="btn btn-secondary" href="{{ url_for('logout') }}">Logout</a>
+</p>
 
 <h3>Your Reports</h3>
 <table class="data-table">
-  <tr><th>ID</th><th>Desc</th><th>Severity</th><th>Verified</th><th>Feedback</th><th>Date</th></tr>
-  {% for r in reports %}
-  <tr>
-    <td>{{ r.id }}</td>
-    <td>{{ r.description }}</td>
-    <td>{{ r.severity }}</td>
-    <td>{{ 'Yes' if r.verified else 'No' }}</td>
-    <td>{{ r.admin_feedback or '—' }}</td>
-    <td>{{ r.created_at }}</td>
-  </tr>
-  {% endfor %}
+<tr><th>ID</th><th>Description</th><th>Severity</th><th>Status</th><th>Lat</th><th>Lon</th><th>Date</th><th>Feedback</th></tr>
+{% for r in reports %}
+<tr>
+  <td>{{ r.id }}</td>
+  <td>{{ r.description }}</td>
+  <td>{{ r.severity }}</td>
+  <td>{{ r.status }}</td>
+  <td>{{ r.latitude }}</td>
+  <td>{{ r.longitude }}</td>
+  <td>{{ r.created_at }}</td>
+  <td>{{ r.admin_feedback or 'No feedback' }}</td>
+</tr>
+{% endfor %}
 </table>
 {% endblock %}
