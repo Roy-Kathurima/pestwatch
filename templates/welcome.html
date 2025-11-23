@@ -1,11 +1,10 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="welcome">
-  <h1>Welcome to Pest Watch</h1>
-  <p>Smart pest reporting and outbreak monitoring.</p>
-  <p>
-    <a class="btn" href="{{ url_for('login') }}">Login</a>
-    <a class="btn" href="{{ url_for('register') }}">Register</a>
-  </p>
+  <h2>Welcome to Pest Watch</h2>
+  <p>Smart agricultural pest detection and reporting</p>
+
+  <a class="btn" href="{{ url_for('login') }}">Login</a>
+  <a class="btn btn-secondary" href="{{ url_for('register') }}">Register</a>
 </div>
 {% endblock %}
