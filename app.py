@@ -1,22 +1,29 @@
-import os
-from flask import Flask, render_template, request, redirect, url_for, jsonify, flash, session, send_from_directory
-from werkzeug.utils import secure_filename
-from models import db, User, Report
+from flask import Flask
 from config import Config
-from math import radians, sin, cos, sqrt, asin
-from datetime import datetime, timedelta
-
-ALLOWED_EXTENSIONS = {'png','jpg','jpeg','gif'}
+from models import db
+import os
 
 def create_app():
-    app = Flask(__name__, static_url_path='/static')
+    app = Flask(__name__)
     app.config.from_object(Config)
-    # ensure upload folder exists
-    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+    # Make sure uploads folder exists
+    os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+
     db.init_app(app)
+
+    with app.app_context():
+        db.create_all()
+
+    # After database created, import routes
+    from routes import main
+    app.register_blueprint(main)
+
     return app
 
+
 app = create_app()
+
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.',1)[1].lower() in ALLOWED_EXTENSIONS
@@ -215,5 +222,6 @@ with app.app_context():
 
 if __name__ == '__main__':
     app.run()
+
 
 
