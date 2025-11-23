@@ -2,115 +2,130 @@
 {% block content %}
 <h2>Admin Dashboard</h2>
 
-<p>
-  <a class="btn" href="{{ url_for('admin_export') }}">Export CSV</a>
-</p>
+<div style="margin-bottom:12px;">
+  <button class="btn" onclick="toggleHeat()">Toggle Heatmap</button>
+</div>
 
-<div id="adminMap" style="width:100%; height:400px; border:1px solid #ccc;"></div>
+<div id="adminMap" style="height:420px; border:1px solid #ccc;"></div>
 
 <h3>Reports</h3>
-<table class="data-table" id="repTable">
-<tr><th>ID</th><th>User</th><th>Severity</th><th>Verified</th><th>Image</th><th>Date</th><th>Action</th></tr>
-{% for r in reports %}
-<tr>
-  <td>{{ r.id }}</td>
-  <td>{{ r.farmer.fullname if r.farmer else 'Unknown' }}</td>
-  <td>{{ r.severity }}</td>
-  <td>{{ 'Yes' if r.verified else 'No' }}</td>
-  <td>{% if r.image_filename %}<a href="{{ url_for('uploaded_file', filename=r.image_filename) }}" target="_blank">View</a>{% else %}No Image{% endif %}</td>
-  <td>{{ r.created_at }}</td>
-  <td>
-    <button onclick="toggleVerify({{ r.id }})">{{ 'Unverify' if r.verified else 'Verify' }}</button>
-    <button onclick="openFeedback({{ r.id }}, {{ r.latitude }}, {{ r.longitude }}, '{{ (r.admin_feedback or '')|replace('\\','\\\\')|replace(\"'\",\"\\'\") }}', '{{ r.status }}', '{{ r.severity }}')">Feedback</button>
-  </td>
-</tr>
-{% endfor %}
+<table class="data-table" id="reportsTable">
+  <tr><th>ID</th><th>User</th><th>Severity</th><th>Verified</th><th>Status</th><th>Image</th><th>Date</th><th>Action</th></tr>
+  {% for r in reports %}
+  <tr data-lat="{{ r.latitude }}" data-lon="{{ r.longitude }}">
+    <td>{{ r.id }}</td>
+    <td>{{ r.farmer.fullname if r.farmer else 'Unknown' }}</td>
+    <td>{{ r.severity }}</td>
+    <td>{{ 'Yes' if r.verified else 'No' }}</td>
+    <td>{{ r.status }}</td>
+    <td>{% if r.image_filename %}<a href="{{ url_for('uploaded_file', filename=r.image_filename) }}" target="_blank">View</a>{% else %}No Image{% endif %}</td>
+    <td>{{ r.created_at }}</td>
+    <td>
+      <button class="btn" onclick="toggleVerify({{ r.id }})">{{ 'Unverify' if r.verified else 'Verify' }}</button>
+      <button class="btn btn-secondary" onclick="centerTo({{ r.latitude }}, {{ r.longitude }})">Go</button>
+      <button class="btn btn-secondary" onclick="openFeedback({{ r.id }}, `{{ (r.admin_feedback or '')|replace('`','\\`') }}`, '{{ r.status }}')">Feedback</button>
+    </td>
+  </tr>
+  {% endfor %}
 </table>
 
 <!-- Feedback modal (simple) -->
-<div id="feedbackBox" style="display:none; position:fixed; left:10%; top:10%; width:80%; background:white; padding:16px; border:1px solid #666; z-index:9999;">
-  <h3>Provide feedback</h3>
-  <form id="feedbackForm" method="post">
+<div id="feedbackBox" style="display:none; position:fixed; left:20%; top:15%; width:60%; background:white; border:1px solid #ccc; padding:16px; z-index:9999;">
+  <h4>Admin Feedback</h4>
+  <form id="feedbackForm" method="POST">
     <input type="hidden" name="report_id" id="fb_report_id">
-    <label>Feedback</label>
-    <textarea name="feedback" id="fb_feedback" style="width:100%; height:80px;"></textarea>
     <label>Status</label>
     <select name="status" id="fb_status">
       <option value="new">New</option>
       <option value="in_progress">In Progress</option>
       <option value="resolved">Resolved</option>
     </select>
-    <label>Severity</label>
-    <select name="severity" id="fb_severity">
-      <option>Low</option><option>Moderate</option><option>Severe</option><option>Critical</option>
-    </select>
-
-    <p>
-      <button type="button" class="btn" onclick="submitFeedback()">Save</button>
-      <button type="button" class="btn btn-secondary" onclick="closeFeedback()">Close</button>
-      <button type="button" class="btn btn-danger" onclick="gotoLocation()">Go to Location</button>
-    </p>
+    <label>Feedback</label>
+    <textarea name="feedback" id="fb_feedback" rows="4" style="width:100%"></textarea>
+    <div style="margin-top:10px;">
+      <button class="btn" type="button" onclick="submitFeedback()">Save</button>
+      <button class="btn btn-secondary" type="button" onclick="closeFeedback()">Cancel</button>
+    </div>
   </form>
 </div>
 
+<!-- heat plugin -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.min.js"></script>
+
 <script>
-const map = L.map('adminMap').setView([0.3,37.7], 6);
+const ICONS = {
+  Low: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+  Moderate: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png',
+  Severe: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+  Critical: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-violet.png'
+};
+const ICON_SHADOW = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-shadow.png';
+function makeIcon(url){ return L.icon({ iconUrl:url, shadowUrl:ICON_SHADOW, iconSize:[25,41], iconAnchor:[12,41], popupAnchor:[1,-34], shadowSize:[41,41] }); }
+
+let map = L.map('adminMap').setView([0.3, 37.7], 6);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
 
-const reports = {{ reports|tojson }};
+let heatLayer = L.heatLayer([], {radius:25, blur:15});
 let markers = [];
 
-function drawMarkers(){
+function loadFromTable(){
+  heatLayer.setLatLngs([]);
   markers.forEach(m=>map.removeLayer(m));
-  markers = [];
-  reports.forEach(r=>{
-    if(!r.latitude || !r.longitude) return;
-    const color = (r.severity==='Low')? 'green' : (r.severity==='Moderate')? 'orange' : (r.severity==='Severe')? 'red' : 'purple';
-    const m = L.marker([r.latitude, r.longitude]).addTo(map);
-    let popup = `<b>ID:</b> ${r.id}<br><b>User:</b> ${r.farmer ? r.farmer.fullname : 'Unknown'}<br><b>Severity:</b> ${r.severity}<br><b>Verified:</b> ${r.verified ? 'Yes':'No'}`;
-    if(r.image) popup += `<br><img src="${r.image}" width="180">`;
-    m.bindPopup(popup);
+  markers=[];
+  const rows = document.querySelectorAll('#reportsTable tr[data-lat]');
+  rows.forEach(r=>{
+    const lat = parseFloat(r.dataset.lat);
+    const lon = parseFloat(r.dataset.lon);
+    const cols = r.children;
+    const sev = cols[2].textContent.trim();
+    const icon = makeIcon(ICONS[sev]||ICONS.Low);
+    const m = L.marker([lat,lon], {icon: icon}).addTo(map);
+    m.bindPopup(`<b>ID:</b> ${cols[0].innerText}<br><b>User:</b> ${cols[1].innerText}<br><b>Severity:</b> ${sev}<br><b>Status:</b> ${cols[4].innerText}`);
     markers.push(m);
+    // heat weight by severity
+    let w = 0.4; if (sev==='Low') w=0.2; if (sev==='Moderate') w=0.5; if (sev==='Severe') w=0.8; if (sev==='Critical') w=1.0;
+    heatLayer.addLatLng([lat,lon,w]);
   });
+  heatLayer.addTo(map);
 }
-drawMarkers();
+loadFromTable();
+
+function toggleHeat(){
+  if (map.hasLayer(heatLayer)) map.removeLayer(heatLayer);
+  else map.addLayer(heatLayer);
+}
 
 function toggleVerify(id){
-  fetch('/admin/toggle_verify/' + id, {method:'POST'}).then(r=>r.json()).then(j=>{
-    if(j.success) location.reload();
-    else alert('Error');
-  });
+  fetch('/admin/toggle_verify/'+id, {method:'POST'})
+    .then(r=>r.json())
+    .then(j=>{
+      if (j.success) location.reload();
+      else alert('Error toggling verify');
+    });
 }
 
-function openFeedback(id, lat, lon, feedback, status, severity){
-  document.getElementById('fb_report_id').value = id;
-  document.getElementById('fb_feedback').value = feedback || '';
-  document.getElementById('fb_status').value = status || 'new';
-  document.getElementById('fb_severity').value = severity || 'Low';
-  document.getElementById('feedbackBox').style.display = 'block';
-  feedbackBox_lat = lat;
-  feedbackBox_lon = lon;
+function centerTo(lat,lon){
+  map.setView([lat,lon], 13);
 }
-let feedbackBox_lat=null, feedbackBox_lon=null;
-function closeFeedback(){ document.getElementById('feedbackBox').style.display='none'; }
+
+function openFeedback(id, existing, status){
+  document.getElementById('feedbackBox').style.display = 'block';
+  document.getElementById('fb_report_id').value = id;
+  document.getElementById('fb_feedback').value = existing || '';
+  document.getElementById('fb_status').value = status || 'new';
+}
+
+function closeFeedback(){
+  document.getElementById('feedbackBox').style.display = 'none';
+}
 
 function submitFeedback(){
   const id = document.getElementById('fb_report_id').value;
-  const fd = new FormData();
-  fd.append('feedback', document.getElementById('fb_feedback').value);
-  fd.append('status', document.getElementById('fb_status').value);
-  fd.append('severity', document.getElementById('fb_severity').value);
-  fetch('/admin/feedback/' + id, {method:'POST', body: fd}).then(()=> location.reload());
-}
-
-function gotoLocation(){
-  if(feedbackBox_lat && feedbackBox_lon){
-    map.setView([feedbackBox_lat, feedbackBox_lon], 14);
-    closeFeedback();
-  } else {
-    alert('No coordinates available for this report.');
-  }
+  const data = new URLSearchParams();
+  data.append('feedback', document.getElementById('fb_feedback').value);
+  data.append('status', document.getElementById('fb_status').value);
+  fetch('/admin/feedback/'+id, {method:'POST', body:data})
+    .then(()=> { location.reload(); });
 }
 </script>
-
 {% endblock %}
