@@ -1,3 +1,4 @@
+# init_db.py
 from app import app
 from models import db
 
