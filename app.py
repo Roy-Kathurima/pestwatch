@@ -1,216 +1,210 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for, jsonify, flash, session, send_from_directory
-from werkzeug.utils import secure_filename
-from datetime import datetime, timedelta
-from math import radians, sin, cos, sqrt, asin
-
-# import models/db after setting config
+from flask import Flask, render_template, request, redirect, url_for, flash, session, send_file, jsonify
 from config import Config
 from models import db, User, Report
+from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
+from io import StringIO
+import csv
+from datetime import datetime
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
-def create_app():
-    app = Flask(__name__)
-    app.config.from_object(Config)
-
-    # ensure upload folder exists
-    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-
-    db.init_app(app)
-
-    # Create tables if they do not exist (safe for first-run)
-    with app.app_context():
-        db.create_all()
-
-    return app
-
-app = create_app()
-
-# ---------------- utilities ----------------
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def haversine(lat1, lon1, lat2, lon2):
-    R = 6371.0
-    dlat = radians(lat2 - lat1)
-    dlon = radians(lon2 - lon1)
-    a = sin(dlat/2)**2 + cos(radians(lat1))*cos(radians(lat2))*sin(dlon/2)**2
-    c = 2 * asin(sqrt(a))
-    return R * c
+def create_app():
+    app = Flask(__name__, static_folder='static', template_folder='templates')
+    app.config.from_object(Config)
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    db.init_app(app)
 
-def check_for_alerts(lat, lon, radius_km=5, hours=24, threshold=5):
-    since = datetime.utcnow() - timedelta(hours=hours)
-    reports = Report.query.filter(Report.created_at >= since).all()
-    count = sum(1 for r in reports if haversine(lat, lon, r.latitude, r.longitude) <= radius_km)
-    return count >= threshold, count
+    @app.route('/')
+    def index():
+        # public landing/welcome page
+        return render_template('welcome.html')
 
-# ---------------- routes ----------------
-@app.route('/')
-def home():
-    return render_template('welcome.html')
+    # --------------------
+    # User registration + login (simple session-based)
+    # --------------------
+    @app.route('/register', methods=['GET','POST'])
+    def register():
+        if request.method == 'POST':
+            name = request.form.get('fullname')
+            email = request.form.get('email')
+            password = request.form.get('password')
+            if not name or not email or not password:
+                flash('Please fill all fields')
+                return redirect(url_for('register'))
+            if User.query.filter_by(email=email).first():
+                flash('Email already registered')
+                return redirect(url_for('register'))
+            u = User(fullname=name, email=email, password_hash=generate_password_hash(password))
+            db.session.add(u)
+            db.session.commit()
+            flash('Registration successful. Please login.')
+            return redirect(url_for('login'))
+        return render_template('register.html')
 
-@app.route('/register', methods=['GET','POST'])
-def register():
-    if request.method == 'POST':
-        fullname = request.form.get('fullname')
-        email = request.form.get('email')
-        password = request.form.get('password')
-        if not fullname or not email or not password:
-            flash("Please fill all fields.")
-            return redirect(url_for('register'))
-        if User.query.filter_by(email=email).first():
-            flash("Email already exists.")
-            return redirect(url_for('register'))
-        user = User(fullname=fullname, email=email)
-        user.set_password(password)
-        db.session.add(user)
+    @app.route('/login', methods=['GET','POST'])
+    def login():
+        if request.method == 'POST':
+            email = request.form.get('email')
+            password = request.form.get('password')
+            # find user
+            user = User.query.filter_by(email=email).first()
+            if user and check_password_hash(user.password_hash, password):
+                session['user_id'] = user.id
+                session['user_name'] = user.fullname
+                flash('Logged in successfully.')
+                return redirect(url_for('dashboard'))
+            else:
+                flash('Invalid credentials.')
+                return redirect(url_for('login'))
+        return render_template('login.html')
+
+    @app.route('/logout')
+    def logout():
+        session.clear()
+        flash('Logged out.')
+        return redirect(url_for('index'))
+
+    # --------------------
+    # User Dashboard (my reports)
+    # --------------------
+    @app.route('/dashboard')
+    def dashboard():
+        uid = session.get('user_id')
+        if not uid:
+            flash('Please login first.')
+            return redirect(url_for('login'))
+        user = User.query.get(uid)
+        reports = Report.query.filter_by(user_id=uid).order_by(Report.created_at.desc()).all()
+        return render_template('dashboard.html', user=user, reports=reports)
+
+    # --------------------
+    # Submit report page
+    # --------------------
+    @app.route('/report', methods=['GET','POST'])
+    def report():
+        uid = session.get('user_id')
+        if request.method == 'POST':
+            title = request.form.get('title')
+            desc = request.form.get('description')
+            pest_type = request.form.get('pest_type')
+            severity = request.form.get('severity')
+            lat = request.form.get('latitude') or None
+            lon = request.form.get('longitude') or None
+            file = request.files.get('image')
+            filename = None
+            if file and allowed_file(file.filename):
+                filename = secure_filename(f"{int(datetime.utcnow().timestamp())}_{file.filename}")
+                file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
+            r = Report(
+                title=title,
+                description=desc,
+                pest_type=pest_type,
+                severity=severity,
+                image_filename=filename,
+                latitude=float(lat) if lat else None,
+                longitude=float(lon) if lon else None,
+                user_id=uid
+            )
+            db.session.add(r)
+            db.session.commit()
+            flash('Report submitted, thank you.')
+            return redirect(url_for('dashboard') if uid else url_for('index'))
+        # GET
+        return render_template('report.html')
+
+    # --------------------
+    # Admin login + dashboard
+    # --------------------
+    @app.route('/admin/login', methods=['GET','POST'])
+    def admin_login():
+        if request.method == 'POST':
+            pwd = request.form.get('password')
+            if pwd == app.config['ADMIN_PASSWORD']:
+                session['is_admin'] = True
+                return redirect(url_for('admin_dashboard'))
+            flash('Wrong admin password')
+            return redirect(url_for('admin_login'))
+        return render_template('admin_login.html')
+
+    @app.route('/admin/logout')
+    def admin_logout():
+        session.pop('is_admin', None)
+        flash('Admin logged out')
+        return redirect(url_for('index'))
+
+    @app.route('/admin/dashboard')
+    def admin_dashboard():
+        if not session.get('is_admin'):
+            flash('Admin only.')
+            return redirect(url_for('admin_login'))
+        # show summary and all reports
+        reports = Report.query.order_by(Report.created_at.desc()).all()
+        total = len(reports)
+        verified_count = Report.query.filter_by(verified=True).count()
+        return render_template('admin_dashboard.html', reports=reports, total=total, verified_count=verified_count)
+
+    # Admin: mark verified / feedback
+    @app.route('/admin/report/<int:report_id>/verify', methods=['POST'])
+    def admin_verify(report_id):
+        if not session.get('is_admin'):
+            return ('Forbidden', 403)
+        r = Report.query.get_or_404(report_id)
+        r.verified = request.form.get('verified') == 'true'
+        r.admin_feedback = request.form.get('feedback', r.admin_feedback)
         db.session.commit()
-        flash("Registered successfully. Please login.")
-        return redirect(url_for('login'))
-    return render_template('register.html')
+        return jsonify({'status':'ok'})
 
-@app.route('/login', methods=['GET','POST'])
-def login():
-    if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
-        user = User.query.filter_by(email=email).first()
-        if user and user.check_password(password):
-            session['user_id'] = user.id
-            session['user_name'] = user.fullname
-            flash("Logged in.")
-            return redirect(url_for('user_dashboard'))
-        flash("Invalid credentials.")
-    return render_template('login.html')
-
-@app.route('/dashboard')
-def user_dashboard():
-    if not session.get('user_id'):
-        return redirect(url_for('login'))
-    user = User.query.get(session['user_id'])
-    return render_template('dashboard.html', user=user, reports=user.reports)
-
-@app.route('/logout')
-def logout():
-    session.clear()
-    flash("Logged out.")
-    return redirect(url_for('home'))
-
-@app.route('/report', methods=['GET','POST'])
-def report():
-    if not session.get('user_id'):
-        flash("Please login to submit report.")
-        return redirect(url_for('login'))
-    if request.method == 'POST':
-        description = request.form.get('description')
-        severity = request.form.get('severity', 'Low')
-        lat = request.form.get('latitude')
-        lon = request.form.get('longitude')
-
-        try:
-            lat = float(lat)
-            lon = float(lon)
-        except (TypeError, ValueError):
-            flash("Please select a valid location.")
-            return redirect(url_for('report'))
-
-        file = request.files.get('image')
-        filename = None
-        if file and allowed_file(file.filename):
-            filename = secure_filename(f"{int(datetime.utcnow().timestamp())}_{file.filename}")
-            save_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(save_path)
-
-        r = Report(
-            farmer_id=session['user_id'],
-            description=description,
-            image_filename=filename,
-            latitude=lat,
-            longitude=lon,
-            severity=severity
+    # Admin: export CSV of reports
+    @app.route('/admin/export/reports')
+    def admin_export_reports():
+        if not session.get('is_admin'):
+            flash('Admin only.'); return redirect(url_for('admin_login'))
+        reports = Report.query.order_by(Report.created_at.desc()).all()
+        si = StringIO()
+        cw = csv.writer(si)
+        cw.writerow(['id','title','description','pest_type','severity','lat','lon','user_id','created_at','verified','admin_feedback'])
+        for r in reports:
+            cw.writerow([r.id, r.title, r.description, r.pest_type, r.severity, r.latitude, r.longitude, r.user_id, r.created_at.isoformat(), r.verified, r.admin_feedback or ''])
+        output = si.getvalue()
+        return send_file(
+            StringIO(output),
+            mimetype='text/csv',
+            as_attachment=True,
+            download_name='reports.csv'
         )
-        db.session.add(r)
-        db.session.commit()
 
-        alert, count = check_for_alerts(lat, lon)
-        if alert:
-            flash(f"ALERT: {count} reports in this area in the last 24 hours.")
-        else:
-            flash("Report submitted.")
-        return redirect(url_for('thanks'))
-    return render_template('report.html')
+    # Admin: view raw DB page (simple table) — only admin can see
+    @app.route('/admin/db')
+    def admin_db_page():
+        if not session.get('is_admin'):
+            flash('Admin only.'); return redirect(url_for('admin_login'))
+        users = User.query.order_by(User.created_at.desc()).all()
+        reports = Report.query.order_by(Report.created_at.desc()).all()
+        return render_template('admin_db.html', users=users, reports=reports)
 
-@app.route('/thanks')
-def thanks():
-    return render_template('thanks.html')
+    # serve uploaded images (optional)
+    @app.route('/uploads/<filename>')
+    def uploaded_file(filename):
+        return send_file(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
-# ------------- Admin --------------
-@app.route('/admin/login', methods=['GET','POST'])
-def admin_login():
-    if request.method == 'POST':
-        password = request.form.get('password')
-        if password == app.config['ADMIN_PASSWORD']:
-            session['admin'] = True
-            return redirect(url_for('admin_dashboard'))
-        flash("Wrong password.")
-    return render_template('admin_login.html')
+    # error handlers
+    @app.errorhandler(404)
+    def not_found(e):
+        return render_template('404.html'), 404
 
-@app.route('/admin/dashboard')
-def admin_dashboard():
-    if not session.get('admin'):
-        return redirect(url_for('admin_login'))
-    reports = Report.query.order_by(Report.created_at.desc()).all()
-    return render_template('admin_dashboard.html', reports=reports)
+    @app.errorhandler(500)
+    def internal_error(e):
+        # do not leak e in production
+        return render_template('500.html'), 500
 
-# Admin-only: view raw DB data (users + reports)
-@app.route('/admin/data')
-def admin_data():
-    if not session.get('admin'):
-        return redirect(url_for('admin_login'))
-    users = User.query.order_by(User.created_at.desc()).all()
-    reports = Report.query.order_by(Report.created_at.desc()).all()
-    return render_template('admin_data.html', users=users, reports=reports)
+    return app
 
-@app.route('/admin/toggle_verify/<int:report_id>', methods=['POST'])
-def admin_toggle_verify(report_id):
-    if not session.get('admin'):
-        return jsonify({'error':'unauthorized'}), 403
-    r = Report.query.get(report_id)
-    if not r:
-        return jsonify({'error':'not found'}), 404
-    r.verified = not r.verified
-    db.session.commit()
-    return jsonify({'success':True, 'verified': r.verified})
-
-# API reports
-@app.route('/api/reports')
-def api_reports():
-    reps = Report.query.order_by(Report.created_at.desc()).all()
-    out = []
-    for r in reps:
-        out.append({
-            'id': r.id,
-            'user': r.farmer.fullname if r.farmer else 'Unknown',
-            'description': r.description,
-            'lat': r.latitude,
-            'lon': r.longitude,
-            'severity': r.severity,
-            'verified': r.verified,
-            'image': url_for('uploaded_file', filename=r.image_filename) if r.image_filename else None,
-            'created_at': r.created_at.isoformat()
-        })
-    return jsonify(out)
-
-@app.route('/uploads/<filename>')
-def uploaded_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
-
-# Generic error handler (so Render returns a friendly page)
-@app.errorhandler(500)
-def internal_error(e):
-    app.logger.error(f"Server error: {e}")
-    return render_template('500.html'), 500
-
+# Standalone run
 if __name__ == '__main__':
+    app = create_app()
     app.run(debug=True)
