@@ -215,10 +215,17 @@ def create_app():
         return render_template("500.html"), 500
 
     return app
+@app.route("/reset-db-secret")
+def reset_db_secret():
+    from models import db
+    db.drop_all()
+    db.create_all()
+    return "DATABASE SUCCESSFULLY RESET AND REBUILT"
 
 # produce app variable expected by gunicorn
 app = create_app()
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
+
 
