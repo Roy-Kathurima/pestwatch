@@ -2,9 +2,14 @@
 {% block content %}
 <div class="welcome">
   <h2>Welcome to Pest Watch</h2>
-  <p>Smart agricultural pest detection and reporting</p>
-
-  <a class="btn" href="{{ url_for('login') }}">Login</a>
-  <a class="btn btn-secondary" href="{{ url_for('register') }}">Register</a>
+  <p>Report crop pest sightings easily from your phone or computer.</p>
+  <div style="margin-top:18px;">
+    {% if session.get('user_id') %}
+      <a class="btn" href="{{ url_for('dashboard') }}">My Dashboard</a>
+    {% else %}
+      <a class="btn" href="{{ url_for('register') }}">Register</a>
+      <a class="btn btn-secondary" href="{{ url_for('login') }}">Login</a>
+    {% endif %}
+  </div>
 </div>
 {% endblock %}
