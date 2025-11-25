@@ -1,10 +1,9 @@
 # app.py
 import os
-from flask import (
-    Flask, render_template, redirect, url_for, request, flash, send_from_directory, jsonify
-)
+from flask import Flask, render_template, redirect, url_for, request, flash, send_from_directory, jsonify
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
+
 from config import Config
 from models import db, User, Report
 
@@ -14,20 +13,16 @@ def create_app():
     app = Flask(__name__, static_folder="static", template_folder="templates")
     app.config.from_object(Config)
 
-    # ensure upload folder exists
-    os.makedirs(app.config.get("UPLOAD_FOLDER", "uploads"), exist_ok=True)
+    os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
-    # init DB
     db.init_app(app)
 
-    # create all tables on first startup (safe for simple projects)
     with app.app_context():
         db.create_all()
 
     def allowed_file(filename):
         return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
-    # Index endpoint (named 'index' — used by templates)
     @app.route("/")
     def index():
         return render_template("welcome.html")
@@ -35,146 +30,109 @@ def create_app():
     @app.route("/register", methods=["GET", "POST"])
     def register():
         if request.method == "POST":
-            fullname = request.form.get("fullname", "").strip()
-            email = request.form.get("email", "").strip().lower()
-            password = request.form.get("password", "")
-            if not fullname or not email or not password:
-                flash("Fill all required fields.", "error")
-                return redirect(url_for("register"))
+            fullname = request.form["fullname"].strip()
+            email = request.form["email"].strip().lower()
+            password = request.form["password"]
+
             if User.query.filter_by(email=email).first():
-                flash("Email already registered.", "error")
+                flash("Email already registered.")
                 return redirect(url_for("register"))
+
             user = User(
                 fullname=fullname,
                 email=email,
                 password_hash=generate_password_hash(password),
-                role="farmer"
             )
             db.session.add(user)
             db.session.commit()
-            flash("Registration successful. You can now log in.", "success")
+
+            flash("Registration successful.")
             return redirect(url_for("login"))
+
         return render_template("register.html")
 
     @app.route("/login", methods=["GET", "POST"])
     def login():
         if request.method == "POST":
-            email = request.form.get("email", "").strip().lower()
-            password = request.form.get("password", "")
+            email = request.form["email"].strip().lower()
+            password = request.form["password"]
+
             user = User.query.filter_by(email=email).first()
+
             if user and check_password_hash(user.password_hash, password):
-                flash("Login successful.", "success")
                 return redirect(url_for("user_dashboard", user_id=user.id))
-            else:
-                flash("Invalid credentials.", "error")
+
+            flash("Invalid credentials.")
+
         return render_template("login.html")
 
     @app.route("/admin-login", methods=["GET", "POST"])
     def admin_login():
         if request.method == "POST":
-            pwd = request.form.get("password", "")
-            if pwd == app.config.get("ADMIN_PASSWORD"):
+            if request.form["password"] == app.config["ADMIN_PASSWORD"]:
                 return redirect(url_for("admin_dashboard"))
-            else:
-                flash("Invalid admin password.", "error")
+            flash("Wrong admin password")
+
         return render_template("admin_login.html")
 
     @app.route("/user/<int:user_id>/dashboard")
     def user_dashboard(user_id):
         user = User.query.get_or_404(user_id)
-        reports = user.reports
-        return render_template("dashboard.html", user=user, reports=reports)
+        return render_template("dashboard.html", user=user, reports=user.reports)
 
     @app.route("/report/new/<int:user_id>", methods=["GET", "POST"])
     def new_report(user_id):
         user = User.query.get_or_404(user_id)
+
         if request.method == "POST":
-            title = request.form.get("title", "Untitled")
-            description = request.form.get("description", "")
-            lat = request.form.get("latitude")
-            lon = request.form.get("longitude")
-            lat_val = float(lat) if lat else None
-            lon_val = float(lon) if lon else None
+            title = request.form["title"]
+            description = request.form["description"]
 
             photo = request.files.get("photo")
             filename = None
+
             if photo and allowed_file(photo.filename):
                 filename = secure_filename(photo.filename)
-                save_path = os.path.join(app.config.get("UPLOAD_FOLDER", "uploads"), filename)
-                photo.save(save_path)
+                photo.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
 
             report = Report(
                 title=title,
                 description=description,
                 photo_filename=filename,
-                latitude=lat_val,
-                longitude=lon_val,
                 user=user
             )
+
             db.session.add(report)
             db.session.commit()
-            flash("Report submitted. Thank you!", "success")
+
+            flash("Report submitted.")
             return redirect(url_for("user_dashboard", user_id=user.id))
+
         return render_template("report.html", user=user)
 
     @app.route("/uploads/<filename>")
     def uploaded_file(filename):
-        return send_from_directory(app.config.get("UPLOAD_FOLDER", "uploads"), filename)
+        return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
 
     @app.route("/admin/dashboard")
     def admin_dashboard():
-        # admin summary page
-        reports = Report.query.order_by(Report.created_at.desc()).all()
-        users_count = User.query.count()
-        reports_count = Report.query.count()
-        verified_count = Report.query.filter_by(status="verified").count()
-        return render_template(
-            "admin_dashboard.html",
-            reports=reports,
-            counts={"users": users_count, "reports": reports_count},
-            verified_count=verified_count
-        )
+        users = User.query.count()
+        reports = Report.query.all()
+        return render_template("admin_dashboard.html", users_count=users, reports=reports)
 
-    @app.route("/admin/report/<int:report_id>/feedback", methods=["POST"])
-    def admin_feedback(report_id):
-        pwd = request.form.get("admin_password", "")
-        if pwd != app.config.get("ADMIN_PASSWORD"):
-            return jsonify({"error": "unauthorized"}), 403
-        feedback = request.form.get("feedback", "")
-        status = request.form.get("status", "")
-        report = Report.query.get_or_404(report_id)
-        report.admin_feedback = feedback
-        if status:
-            report.status = status
-        db.session.commit()
-        flash("Feedback saved.", "success")
-        return redirect(url_for("admin_dashboard"))
-
-    # Admin DB viewer page (very small admin DB browser)
     @app.route("/admin/database")
     def admin_database():
-        pwd = request.args.get("pwd", "")
-        if pwd != app.config.get("ADMIN_PASSWORD"):
-            flash("Admin password required to view database page.", "error")
+        pwd = request.args.get("pwd")
+        if pwd != app.config["ADMIN_PASSWORD"]:
+            flash("Admin password required")
             return redirect(url_for("admin_login"))
-        users = User.query.order_by(User.created_at.desc()).all()
-        reports = Report.query.order_by(Report.created_at.desc()).all()
-        return render_template("admin_database.html", users=users, reports=reports)
-
-    # error handlers (do not call DB inside these)
-    @app.errorhandler(404)
-    def not_found(e):
-        return render_template("404.html"), 404
-
-    @app.errorhandler(500)
-    def internal_error(e):
-        # log e somewhere in advanced cases (here we simply show 500)
-        return render_template("500.html"), 500
+        return render_template("admin_database.html",
+                               users=User.query.all(),
+                               reports=Report.query.all())
 
     return app
 
-# used by gunicorn: "gunicorn \"app:create_app()\""
-# do not override: keep factory and name create_app
+app = create_app()
+
 if __name__ == "__main__":
-    app = create_app()
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
+    app.run(debug=True)
