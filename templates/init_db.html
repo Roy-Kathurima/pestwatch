@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="form-box">
+  <h3>Init DB (Admin)</h3>
+  <p class="small">Use POST with action=create or action=drop and admin_password to run.</p>
+  <form method="post">
+    <label>Action:
+      <select name="action">
+        <option value="create">create</option>
+        <option value="drop">drop</option>
+      </select>
+    </label>
+    <input name="admin_password" placeholder="admin password" type="password" required />
+    <button class="btn">Run</button>
+  </form>
+</div>
+{% endblock %}
