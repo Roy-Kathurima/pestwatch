@@ -28,6 +28,10 @@ def create_app():
     # helpers
     def allowed_file(filename):
         return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+    @app.route("/init-db")
+    def init_db():
+        db.create_all()
+        return "Database tables created successfully!"
 
     def admin_required(f):
         @wraps(f)
@@ -217,3 +221,4 @@ app = create_app()
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
+
