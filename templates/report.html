@@ -1,15 +1,14 @@
 {% extends "base.html" %}
 {% block content %}
-  <h2>New Report</h2>
-  <div class="form-box">
-    <form method="post" enctype="multipart/form-data">
-      <input name="title" placeholder="Title" required>
-      <textarea name="description" placeholder="Description"></textarea>
-      <input name="latitude" placeholder="Latitude">
-      <input name="longitude" placeholder="Longitude">
-      <label>Photo (optional)</label>
-      <input type="file" name="photo" accept="image/*">
-      <button class="btn" type="submit">Submit report</button>
-    </form>
-  </div>
+<div class="form-box">
+  <h3>New Report</h3>
+  <form method="post" enctype="multipart/form-data">
+    <input name="title" placeholder="Title" required />
+    <textarea name="description" placeholder="Describe the pest..."></textarea>
+    <input name="latitude" placeholder="Latitude (optional)" />
+    <input name="longitude" placeholder="Longitude (optional)" />
+    <input name="photo" type="file" />
+    <button class="btn">Submit Report</button>
+  </form>
+</div>
 {% endblock %}
