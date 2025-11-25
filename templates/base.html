@@ -1,31 +1,21 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Pest Watch</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
   <header class="site-header">
     <div class="container">
-      <div class="header-brand">
-        <h1 class="brand"><a href="{{ url_for('index') }}">Pest Watch</a></h1>
-        <nav class="top-nav">
-          <a href="{{ url_for('index') }}">Home</a>
-          {% if session.get('user_id') %}
-            <a href="{{ url_for('user_dashboard', user_id=session.get('user_id')) }}">My Dashboard</a>
-            <a href="{{ url_for('logout') }}">Logout</a>
-          {% elif session.get('is_admin') %}
-            <a href="{{ url_for('admin_dashboard') }}">Admin</a>
-            <a href="{{ url_for('logout') }}">Logout</a>
-          {% else %}
-            <a href="{{ url_for('login') }}">Login</a>
-            <a href="{{ url_for('register') }}">Register</a>
-            <a href="{{ url_for('admin_login') }}">Admin</a>
-          {% endif %}
-        </nav>
-      </div>
+      <h1 class="brand"><a href="{{ url_for('index') }}">Pest Watch</a></h1>
+      <nav class="header-links">
+        <a href="{{ url_for('index') }}">Home</a>
+        <a href="{{ url_for('register') }}">Register</a>
+        <a href="{{ url_for('login') }}">Login</a>
+        <a href="{{ url_for('admin_login') }}">Admin</a>
+      </nav>
     </div>
   </header>
 
@@ -34,7 +24,7 @@
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
           {% for cat, msg in messages %}
-            <div class="flash {{ cat }}">{{ msg }}</div>
+            <div class="flash">{{ msg }}</div>
           {% endfor %}
         {% endif %}
       {% endwith %}
@@ -45,7 +35,7 @@
 
   <footer class="site-footer">
     <div class="container">
-      <small>© Pest Watch</small>
+      Pest Watch — simple demo app
     </div>
   </footer>
 </body>
