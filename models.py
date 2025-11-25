@@ -5,12 +5,12 @@ from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy()
 
 class User(db.Model):
-    __tablename__ = "users"  # avoid reserved names like "user"
+    __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
     fullname = db.Column(db.String(120), nullable=False)
     email = db.Column(db.String(150), unique=True, nullable=False)
-    password_hash = db.Column(db.String(256), nullable=False)  # store hashed password
-    role = db.Column(db.String(20), default="farmer")  # 'farmer' or 'admin'
+    password_hash = db.Column(db.String(256), nullable=False)
+    role = db.Column(db.String(20), default="farmer")
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     reports = db.relationship("Report", back_populates="user", cascade="all, delete-orphan")
@@ -26,7 +26,7 @@ class Report(db.Model):
     photo_filename = db.Column(db.String(300), nullable=True)
     latitude = db.Column(db.Float, nullable=True)
     longitude = db.Column(db.Float, nullable=True)
-    status = db.Column(db.String(50), default="new")  # e.g., new, verified, closed
+    status = db.Column(db.String(50), default="new")
     admin_feedback = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
