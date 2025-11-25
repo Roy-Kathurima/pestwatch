@@ -1,48 +1,51 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <title>Pest Watch</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
 </head>
 <body>
   <header class="site-header">
     <div class="container">
       <h1 class="brand"><a href="{{ url_for('index') }}">Pest Watch</a></h1>
       <nav class="top-nav" style="margin-left:auto;">
-        {% if session.get('user_id') %}
-          <a href="{{ url_for('user_dashboard') }}">Dashboard</a>
-          <a href="{{ url_for('report') }}">Submit Report</a>
+        {% if session.get('is_admin') %}
+          <a href="{{ url_for('admin_dashboard') }}">Admin</a>
+          <a href="{{ url_for('admin_db_page') }}">Database</a>
+          <a href="{{ url_for('admin_logout') }}">Logout</a>
+        {% elif session.get('user_id') %}
+          <a href="{{ url_for('dashboard') }}">Dashboard</a>
+          <a href="{{ url_for('report') }}">New Report</a>
           <a href="{{ url_for('logout') }}">Logout</a>
         {% else %}
           <a href="{{ url_for('login') }}">Login</a>
           <a href="{{ url_for('register') }}">Register</a>
+          <a href="{{ url_for('admin_login') }}">Admin Login</a>
         {% endif %}
-        <!-- admin login link small at bottom if you want it visible -->
-        <a href="{{ url_for('admin_login') }}" style="margin-left:14px; font-size:0.95em; opacity:0.9;">Admin</a>
       </nav>
     </div>
   </header>
 
   <main class="container" style="padding-top:18px;">
-    <div class="flashes">
-      {% with messages = get_flashed_messages() %}
-        {% if messages %}
-          {% for m in messages %}
-            <div class="flash">{{ m }}</div>
-          {% endfor %}
-        {% endif %}
-      {% endwith %}
-    </div>
-
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="flashes">
+        {% for m in messages %}
+          <div class="flash">{{ m }}</div>
+        {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
     {% block content %}{% endblock %}
   </main>
 
-  <footer class="site-footer container">
-    <small>© Pest Watch</small>
+  <footer class="site-footer">
+    <div class="container">
+      <small>© Pest Watch</small>
+    </div>
   </footer>
 </body>
 </html>
