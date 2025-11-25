@@ -1,40 +1,37 @@
 {% extends "base.html" %}
 {% block content %}
-  <h2>Database Viewer (Admin)</h2>
+<h3>Database (Admin)</h3>
 
-  <h3>Users ({{ users|length }})</h3>
-  <table class="data-table">
-    <thead><tr><th>ID</th><th>Full name</th><th>Email</th><th>Role</th><th>Created</th></tr></thead>
-    <tbody>
-      {% for u in users %}
-        <tr>
-          <td>{{ u.id }}</td>
-          <td>{{ u.fullname }}</td>
-          <td>{{ u.email }}</td>
-          <td>{{ u.role }}</td>
-          <td>{{ u.created_at }}</td>
-        </tr>
-      {% else %}
-        <tr><td colspan="5">No users</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+<h4>Users</h4>
+<table class="data-table">
+  <thead><tr><th>ID</th><th>Fullname</th><th>Email</th><th>Role</th><th>Created</th></tr></thead>
+  <tbody>
+    {% for u in users %}
+      <tr>
+        <td>{{ u.id }}</td>
+        <td>{{ u.fullname }}</td>
+        <td>{{ u.email }}</td>
+        <td>{{ u.role }}</td>
+        <td>{{ u.created_at }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
 
-  <h3>Reports ({{ reports|length }})</h3>
-  <table class="data-table">
-    <thead><tr><th>ID</th><th>Title</th><th>User</th><th>Status</th><th>Created</th></tr></thead>
-    <tbody>
-      {% for r in reports %}
-        <tr>
-          <td>{{ r.id }}</td>
-          <td>{{ r.title }}</td>
-          <td>{{ r.user.fullname }}</td>
-          <td>{{ r.status }}</td>
-          <td>{{ r.created_at }}</td>
-        </tr>
-      {% else %}
-        <tr><td colspan="5">No reports</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+<h4 style="margin-top:18px;">Reports</h4>
+<table class="data-table">
+  <thead><tr><th>ID</th><th>Title</th><th>User</th><th>Status</th><th>Feedback</th><th>Created</th></tr></thead>
+  <tbody>
+    {% for r in reports %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td>{{ r.title }}</td>
+        <td>{{ r.user.email }}</td>
+        <td>{{ r.status }}</td>
+        <td>{{ r.admin_feedback or '' }}</td>
+        <td>{{ r.created_at }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
 {% endblock %}
