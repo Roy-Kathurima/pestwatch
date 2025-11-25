@@ -1,71 +1,34 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Admin Dashboard</h2>
-<p>Total reports: {{ total }} — Verified: {{ verified_count }}</p>
+  <h2>Admin Dashboard</h2>
+  <p><a class="btn" href="{{ url_for('admin_database') }}">Open database viewer</a></p>
 
-<div style="margin:10px 0;">
-  <a class="btn" href="{{ url_for('admin_export_reports') }}">Export CSV</a>
-  <a class="btn btn-secondary" href="{{ url_for('admin_db_page') }}">Open Database Page</a>
-</div>
-
-<table class="data-table">
-  <thead><tr><th>ID</th><th>Title</th><th>User</th><th>When</th><th>Verified</th><th>Actions</th></tr></thead>
-  <tbody>
-  {% for r in reports %}
-    <tr id="r-{{ r.id }}">
-      <td>{{ r.id }}</td>
-      <td>{{ r.title }}</td>
-      <td>{{ r.user.fullname if r.user else 'Anonymous' }}</td>
-      <td>{{ r.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
-      <td class="verified">{{ 'Yes' if r.verified else 'No' }}</td>
-      <td>
-        <button onclick="toggleVerify({{ r.id }})" class="btn btn-secondary">Toggle Verify</button>
-        <button onclick="openFeedback({{ r.id }}, {{ (r.admin_feedback or '')|tojson }})" class="btn">Feedback</button>
-        {% if r.latitude and r.longitude %}
-          <a class="btn" href="https://www.openstreetmap.org/?mlat={{ r.latitude }}&mlon={{ r.longitude }}#map=16/{{ r.latitude }}/{{ r.longitude }}" target="_blank">Go to map</a>
-        {% endif %}
-      </td>
-    </tr>
-  {% endfor %}
-  </tbody>
-</table>
-
-<!-- Feedback modal (simple) -->
-<div id="feedback-modal" style="display:none; position:fixed; left:20%; top:20%; width:60%; background:white; border:1px solid #ccc; padding:12px;">
-  <h4>Leave feedback</h4>
-  <textarea id="feedback-text" style="width:100%;height:120px"></textarea>
-  <div style="margin-top:8px;">
-    <button class="btn" id="save-feedback">Save</button>
-    <button class="btn btn-secondary" id="close-feedback">Close</button>
-  </div>
-</div>
-
-<script>
-let currentReportId=null;
-function toggleVerify(id){
-  fetch(`/admin/report/${id}/verify`, {
-    method:'POST',
-    headers: {'Content-Type':'application/x-www-form-urlencoded'},
-    body: new URLSearchParams({'verified': 'true', 'feedback':''})
-  }).then(r=>r.json()).then(data=> location.reload());
-}
-function openFeedback(id, currentFeedback){
-  currentReportId = id;
-  document.getElementById('feedback-text').value = currentFeedback || '';
-  document.getElementById('feedback-modal').style.display = 'block';
-}
-document.getElementById('close-feedback')?.addEventListener('click', ()=> {
-  document.getElementById('feedback-modal').style.display='none';
-});
-document.getElementById('save-feedback')?.addEventListener('click', ()=> {
-  if (!currentReportId) return;
-  const feedback = document.getElementById('feedback-text').value || '';
-  fetch(`/admin/report/${currentReportId}/verify`, {
-    method:'POST',
-    headers: {'Content-Type':'application/x-www-form-urlencoded'},
-    body: new URLSearchParams({'verified': 'true', 'feedback': feedback})
-  }).then(r=>r.json()).then(()=> location.reload());
-});
-</script>
-
+  <h3>Recent reports</h3>
+  <table class="data-table">
+    <thead><tr><th>ID</th><th>Title</th><th>User</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>
+      {% for r in reports %}
+        <tr>
+          <td>{{ r.id }}</td>
+          <td>{{ r.title }}</td>
+          <td>{{ r.user.fullname }}</td>
+          <td>{{ r.status }}</td>
+          <td>
+            <form method="post" action="{{ url_for('admin_feedback', report_id=r.id) }}">
+              <input type="hidden" name="admin_password" value="{{ config.ADMIN_PASSWORD }}">
+              <input name="feedback" placeholder="Feedback">
+              <select name="status">
+                <option value="">-- status --</option>
+                <option value="verified">verified</option>
+                <option value="closed">closed</option>
+              </select>
+              <button class="btn" type="submit">Save</button>
+            </form>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5">No reports</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
 {% endblock %}
