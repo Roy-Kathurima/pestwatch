@@ -1,37 +1,15 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="form-box">
-  <h3>Submit Report</h3>
-  <form method="post" enctype="multipart/form-data">
-    <input name="title" placeholder="Title" required>
-    <textarea name="description" placeholder="Details (optional)"></textarea>
-    <input name="pest_type" placeholder="Pest type (e.g., locust, armyworm)">
-    <select name="severity">
-      <option value="">Select severity</option>
-      <option>Low</option>
-      <option>Medium</option>
-      <option>High</option>
-    </select>
-    <label>Image (optional)</label>
-    <input type="file" name="image" accept="image/*">
-    <div style="margin-bottom:10px;">
-      <button type="button" id="detect-location" class="btn btn-secondary">Detect my location</button>
-    </div>
-    <input id="latitude" name="latitude" placeholder="Latitude">
-    <input id="longitude" name="longitude" placeholder="Longitude">
-    <button class="btn" type="submit">Submit Report</button>
-  </form>
-</div>
-
-<script>
-document.getElementById('detect-location')?.addEventListener('click', function(){
-  if (!navigator.geolocation) { alert('Geolocation not supported by your browser'); return; }
-  navigator.geolocation.getCurrentPosition(function(pos){
-    document.getElementById('latitude').value = pos.coords.latitude;
-    document.getElementById('longitude').value = pos.coords.longitude;
-  }, function(err){
-    alert('Could not detect location: ' + err.message);
-  });
-});
-</script>
+  <h2>New Report</h2>
+  <div class="form-box">
+    <form method="post" enctype="multipart/form-data">
+      <input name="title" placeholder="Title" required>
+      <textarea name="description" placeholder="Description"></textarea>
+      <input name="latitude" placeholder="Latitude">
+      <input name="longitude" placeholder="Longitude">
+      <label>Photo (optional)</label>
+      <input type="file" name="photo" accept="image/*">
+      <button class="btn" type="submit">Submit report</button>
+    </form>
+  </div>
 {% endblock %}
