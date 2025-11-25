@@ -15,23 +15,21 @@ def create_app():
     app.config.from_object(Config)
 
     # ensure upload folder exists
-    os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+    os.makedirs(app.config.get("UPLOAD_FOLDER", "uploads"), exist_ok=True)
 
     # init DB
     db.init_app(app)
 
-    # create all tables on first startup (safe for simple apps; for prod use migrations)
+    # create all tables on first startup (safe for simple projects)
     with app.app_context():
         db.create_all()
 
-    # helpers
     def allowed_file(filename):
         return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
-    # Routes
+    # Index endpoint (named 'index' — used by templates)
     @app.route("/")
     def index():
-        # avoid BuildError: use endpoint name 'index'
         return render_template("welcome.html")
 
     @app.route("/register", methods=["GET", "POST"])
@@ -60,15 +58,12 @@ def create_app():
 
     @app.route("/login", methods=["GET", "POST"])
     def login():
-        # simple login: farmer by email/password; admin uses /admin-login (optionally)
         if request.method == "POST":
             email = request.form.get("email", "").strip().lower()
             password = request.form.get("password", "")
             user = User.query.filter_by(email=email).first()
             if user and check_password_hash(user.password_hash, password):
-                # NOTE: no sessions implemented here — for demo pages we'll pass user via query param or redirect
                 flash("Login successful.", "success")
-                # For real app, use flask-login or sessions; we'll redirect to user_dashboard with user id
                 return redirect(url_for("user_dashboard", user_id=user.id))
             else:
                 flash("Invalid credentials.", "error")
@@ -78,8 +73,7 @@ def create_app():
     def admin_login():
         if request.method == "POST":
             pwd = request.form.get("password", "")
-            if pwd == app.config["ADMIN_PASSWORD"]:
-                # redirect to admin dashboard (no session set; for real app add auth)
+            if pwd == app.config.get("ADMIN_PASSWORD"):
                 return redirect(url_for("admin_dashboard"))
             else:
                 flash("Invalid admin password.", "error")
@@ -106,7 +100,7 @@ def create_app():
             filename = None
             if photo and allowed_file(photo.filename):
                 filename = secure_filename(photo.filename)
-                save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+                save_path = os.path.join(app.config.get("UPLOAD_FOLDER", "uploads"), filename)
                 photo.save(save_path)
 
             report = Report(
@@ -125,11 +119,11 @@ def create_app():
 
     @app.route("/uploads/<filename>")
     def uploaded_file(filename):
-        return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
+        return send_from_directory(app.config.get("UPLOAD_FOLDER", "uploads"), filename)
 
     @app.route("/admin/dashboard")
     def admin_dashboard():
-        # show summarized reports + link to view DB table data
+        # admin summary page
         reports = Report.query.order_by(Report.created_at.desc()).all()
         users_count = User.query.count()
         reports_count = Report.query.count()
@@ -143,9 +137,8 @@ def create_app():
 
     @app.route("/admin/report/<int:report_id>/feedback", methods=["POST"])
     def admin_feedback(report_id):
-        # admin provides feedback text; simple admin auth by password param (for demo)
         pwd = request.form.get("admin_password", "")
-        if pwd != app.config["ADMIN_PASSWORD"]:
+        if pwd != app.config.get("ADMIN_PASSWORD"):
             return jsonify({"error": "unauthorized"}), 403
         feedback = request.form.get("feedback", "")
         status = request.form.get("status", "")
@@ -154,35 +147,34 @@ def create_app():
         if status:
             report.status = status
         db.session.commit()
+        flash("Feedback saved.", "success")
         return redirect(url_for("admin_dashboard"))
 
-    # Provide a DB-browser-like page for admin that lists users & reports (admin only)
+    # Admin DB viewer page (very small admin DB browser)
     @app.route("/admin/database")
     def admin_database():
-        # NOTE: this is an admin-only page; for demo we don't use sessions. Protect by ADMIN_PASSWORD query param.
         pwd = request.args.get("pwd", "")
-        if pwd != app.config["ADMIN_PASSWORD"]:
+        if pwd != app.config.get("ADMIN_PASSWORD"):
             flash("Admin password required to view database page.", "error")
             return redirect(url_for("admin_login"))
         users = User.query.order_by(User.created_at.desc()).all()
         reports = Report.query.order_by(Report.created_at.desc()).all()
         return render_template("admin_database.html", users=users, reports=reports)
 
-    # basic error handlers
+    # error handlers (do not call DB inside these)
     @app.errorhandler(404)
     def not_found(e):
         return render_template("404.html"), 404
 
     @app.errorhandler(500)
     def internal_error(e):
-        # don't call DB in error handler (could cause loop), show simple page
+        # log e somewhere in advanced cases (here we simply show 500)
         return render_template("500.html"), 500
 
     return app
 
-# expose app for gunicorn: 'gunicorn app:app'
-app = create_app()
-
+# used by gunicorn: "gunicorn \"app:create_app()\""
+# do not override: keep factory and name create_app
 if __name__ == "__main__":
-    # local dev
+    app = create_app()
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
