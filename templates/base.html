@@ -5,40 +5,41 @@
   <title>Pest Watch</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-  <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
 </head>
 <body>
   <header class="site-header">
     <div class="container">
-      <h1 class="brand"><a href="{{ url_for('index') }}">Pest Watch</a></h1>
-      <nav class="top-nav" style="margin-left:auto;">
-        {% if session.get('is_admin') %}
-          <a href="{{ url_for('admin_dashboard') }}">Admin</a>
-          <a href="{{ url_for('admin_db_page') }}">Database</a>
-          <a href="{{ url_for('admin_logout') }}">Logout</a>
-        {% elif session.get('user_id') %}
-          <a href="{{ url_for('dashboard') }}">Dashboard</a>
-          <a href="{{ url_for('report') }}">New Report</a>
-          <a href="{{ url_for('logout') }}">Logout</a>
-        {% else %}
-          <a href="{{ url_for('login') }}">Login</a>
-          <a href="{{ url_for('register') }}">Register</a>
-          <a href="{{ url_for('admin_login') }}">Admin Login</a>
-        {% endif %}
-      </nav>
+      <div class="header-brand">
+        <h1 class="brand"><a href="{{ url_for('index') }}">Pest Watch</a></h1>
+        <nav class="top-nav">
+          <a href="{{ url_for('index') }}">Home</a>
+          {% if session.get('user_id') %}
+            <a href="{{ url_for('user_dashboard', user_id=session.get('user_id')) }}">My Dashboard</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+          {% elif session.get('is_admin') %}
+            <a href="{{ url_for('admin_dashboard') }}">Admin</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+          {% else %}
+            <a href="{{ url_for('login') }}">Login</a>
+            <a href="{{ url_for('register') }}">Register</a>
+            <a href="{{ url_for('admin_login') }}">Admin</a>
+          {% endif %}
+        </nav>
+      </div>
     </div>
   </header>
 
-  <main class="container" style="padding-top:18px;">
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        <div class="flashes">
-        {% for m in messages %}
-          <div class="flash">{{ m }}</div>
-        {% endfor %}
-        </div>
-      {% endif %}
-    {% endwith %}
+  <main class="container">
+    <div class="flashes">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for cat, msg in messages %}
+            <div class="flash {{ cat }}">{{ msg }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+    </div>
+
     {% block content %}{% endblock %}
   </main>
 
