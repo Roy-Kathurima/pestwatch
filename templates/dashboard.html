@@ -1,22 +1,22 @@
 {% extends "base.html" %}
 {% block content %}
-  <h2>Welcome {{ user.fullname }}</h2>
-  <p><a class="btn" href="{{ url_for('new_report', user_id=user.id) }}">Report a pest</a></p>
-
-  <h3>Your reports</h3>
+<h2>Hi, {{ user.fullname }}</h2>
+<p class="small">Your reports:</p>
+{% if reports %}
   <table class="data-table">
     <thead><tr><th>ID</th><th>Title</th><th>Status</th><th>Created</th></tr></thead>
     <tbody>
-      {% for r in reports %}
-        <tr>
-          <td>{{ r.id }}</td>
-          <td>{{ r.title }}</td>
-          <td>{{ r.status }}</td>
-          <td>{{ r.created_at }}</td>
-        </tr>
-      {% else %}
-        <tr><td colspan="4">No reports yet.</td></tr>
-      {% endfor %}
+    {% for r in reports %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td>{{ r.title }}</td>
+        <td>{{ r.status }}</td>
+        <td>{{ r.created_at }}</td>
+      </tr>
+    {% endfor %}
     </tbody>
   </table>
+{% else %}
+  <p>No reports yet. <a href="{{ url_for('new_report', user_id=user.id) }}">Create one</a>.</p>
+{% endif %}
 {% endblock %}
