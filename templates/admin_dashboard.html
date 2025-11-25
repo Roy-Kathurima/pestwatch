@@ -1,34 +1,31 @@
 {% extends "base.html" %}
 {% block content %}
-  <h2>Admin Dashboard</h2>
-  <p><a class="btn" href="{{ url_for('admin_database') }}">Open database viewer</a></p>
+<div class="admin-card">
+  <h3>Admin Dashboard</h3>
+  <div class="top-actions">
+    <div>Users: {{ counts.users }} &nbsp; Reports: {{ counts.reports }}</div>
+    <div style="margin-left:auto;">
+      <a class="btn" href="{{ url_for('admin_database') }}?pwd={{ pwd }}">DB View</a>
+    </div>
+  </div>
+</div>
 
-  <h3>Recent reports</h3>
+{% if reports %}
   <table class="data-table">
-    <thead><tr><th>ID</th><th>Title</th><th>User</th><th>Status</th><th>Actions</th></tr></thead>
+    <thead><tr><th>ID</th><th>Title</th><th>User</th><th>Status</th><th>Created</th></tr></thead>
     <tbody>
       {% for r in reports %}
         <tr>
           <td>{{ r.id }}</td>
           <td>{{ r.title }}</td>
-          <td>{{ r.user.fullname }}</td>
+          <td>{{ r.user.email }}</td>
           <td>{{ r.status }}</td>
-          <td>
-            <form method="post" action="{{ url_for('admin_feedback', report_id=r.id) }}">
-              <input type="hidden" name="admin_password" value="{{ config.ADMIN_PASSWORD }}">
-              <input name="feedback" placeholder="Feedback">
-              <select name="status">
-                <option value="">-- status --</option>
-                <option value="verified">verified</option>
-                <option value="closed">closed</option>
-              </select>
-              <button class="btn" type="submit">Save</button>
-            </form>
-          </td>
+          <td>{{ r.created_at }}</td>
         </tr>
-      {% else %}
-        <tr><td colspan="5">No reports</td></tr>
       {% endfor %}
     </tbody>
   </table>
+{% else %}
+  <p>No reports yet.</p>
+{% endif %}
 {% endblock %}
