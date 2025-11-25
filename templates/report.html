@@ -1,68 +1,37 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Submit Pest Report</h2>
-
-<form method="POST" enctype="multipart/form-data">
-  <div class="form-box">
-    <label>Description</label>
-    <textarea name="description" rows="3"></textarea>
-
-    <label>Severity</label>
-    <select name="severity" required>
-      <option value="Low">Low infestation</option>
-      <option value="Moderate">Moderate infestation</option>
-      <option value="Severe">Severe infestation</option>
-      <option value="Critical">Critical outbreak</option>
+<div class="form-box">
+  <h3>Submit Report</h3>
+  <form method="post" enctype="multipart/form-data">
+    <input name="title" placeholder="Title" required>
+    <textarea name="description" placeholder="Details (optional)"></textarea>
+    <input name="pest_type" placeholder="Pest type (e.g., locust, armyworm)">
+    <select name="severity">
+      <option value="">Select severity</option>
+      <option>Low</option>
+      <option>Medium</option>
+      <option>High</option>
     </select>
-
     <label>Image (optional)</label>
     <input type="file" name="image" accept="image/*">
-
-    <label>Latitude</label>
-    <input id="lat" name="latitude" readonly required>
-
-    <label>Longitude</label>
-    <input id="lon" name="longitude" readonly required>
-
     <div style="margin-bottom:10px;">
-      <button type="button" class="btn" onclick="openMap()">Select location on map</button>
-      <button type="button" class="btn btn-secondary" onclick="detectLocation()">Use device geolocation</button>
+      <button type="button" id="detect-location" class="btn btn-secondary">Detect my location</button>
     </div>
-
-    <div id="mapBox" style="display:none; height:350px; border:1px solid #ccc; margin-bottom:10px;"></div>
-
+    <input id="latitude" name="latitude" placeholder="Latitude">
+    <input id="longitude" name="longitude" placeholder="Longitude">
     <button class="btn" type="submit">Submit Report</button>
-  </div>
-</form>
+  </form>
+</div>
 
 <script>
-let map, marker;
-function openMap() {
-  document.getElementById('mapBox').style.display = 'block';
-  if (!map) {
-    map = L.map('mapBox').setView([0.3, 37.7], 6);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
-    map.on('click', function(e){
-      const lat = e.latlng.lat.toFixed(6);
-      const lon = e.latlng.lng.toFixed(6);
-      document.getElementById('lat').value = lat;
-      document.getElementById('lon').value = lon;
-      if (marker) marker.setLatLng(e.latlng); else marker = L.marker(e.latlng).addTo(map);
-    });
-  }
-}
-
-function detectLocation(){
-  if (!navigator.geolocation) { alert('Geolocation not supported'); return; }
+document.getElementById('detect-location')?.addEventListener('click', function(){
+  if (!navigator.geolocation) { alert('Geolocation not supported by your browser'); return; }
   navigator.geolocation.getCurrentPosition(function(pos){
-    const lat = pos.coords.latitude.toFixed(6);
-    const lon = pos.coords.longitude.toFixed(6);
-    document.getElementById('lat').value = lat;
-    document.getElementById('lon').value = lon;
-    openMap();
-    map.setView([lat,lon],12);
-    if (marker) marker.setLatLng([lat,lon]); else marker = L.marker([lat,lon]).addTo(map);
-  }, function(){ alert('Unable to detect location'); });
-}
+    document.getElementById('latitude').value = pos.coords.latitude;
+    document.getElementById('longitude').value = pos.coords.longitude;
+  }, function(err){
+    alert('Could not detect location: ' + err.message);
+  });
+});
 </script>
 {% endblock %}
