@@ -1,26 +1,22 @@
 {% extends "base.html" %}
 {% block content %}
 <h2>Welcome, {{ user.fullname }}</h2>
-
-<p>
-  <a class="btn" href="{{ url_for('report') }}">Submit New Report</a>
-  <a class="btn btn-danger" href="{{ url_for('logout') }}" style="margin-left:10px;">Logout</a>
-</p>
-
-<h3>Your Submitted Reports</h3>
+<p>Your reports:</p>
 <table class="data-table">
-  <tr><th>ID</th><th>Description</th><th>Severity</th><th>Status</th><th>Lat</th><th>Lon</th><th>Date</th><th>Feedback</th></tr>
+  <thead><tr><th>ID</th><th>Title</th><th>Type</th><th>Severity</th><th>When</th><th>Verified</th></tr></thead>
+  <tbody>
   {% for r in reports %}
-  <tr>
-    <td>{{ r.id }}</td>
-    <td>{{ r.description }}</td>
-    <td>{{ r.severity }}</td>
-    <td>{{ r.status }}</td>
-    <td>{{ r.latitude }}</td>
-    <td>{{ r.longitude }}</td>
-    <td>{{ r.created_at }}</td>
-    <td>{{ r.admin_feedback or 'No feedback' }}</td>
-  </tr>
+    <tr>
+      <td>{{ r.id }}</td>
+      <td>{{ r.title }}</td>
+      <td>{{ r.pest_type }}</td>
+      <td>{{ r.severity }}</td>
+      <td>{{ r.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+      <td>{{ 'Yes' if r.verified else 'No' }}</td>
+    </tr>
+  {% else %}
+    <tr><td colspan="6">No reports yet</td></tr>
   {% endfor %}
+  </tbody>
 </table>
 {% endblock %}
