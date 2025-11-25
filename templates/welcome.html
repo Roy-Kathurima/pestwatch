@@ -1,8 +1,11 @@
 {% extends "base.html" %}
 {% block content %}
-  <div class="welcome">
-    <h2>Welcome to Pest Watch</h2>
-    <p>Report pest sightings from your farm to help farmers and extension officers.</p>
-    <p><a class="btn" href="{{ url_for('register') }}">Get started</a></p>
+<div class="welcome">
+  <h2>Welcome to Pest Watch</h2>
+  <p class="small">Report agricultural pests from your farm so experts can help.</p>
+  <div style="margin-top:14px;">
+    <a class="btn" href="{{ url_for('register') }}">Register</a>
+    <a class="btn btn-secondary" href="{{ url_for('login') }}">Login</a>
   </div>
+</div>
 {% endblock %}
