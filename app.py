@@ -217,6 +217,14 @@ def create_app():
         # return simple 500 page
         return render_template("500.html"), 500
 
+    @app.route("/reset-db")
+def reset_db():
+    from app import db
+    db.drop_all()
+    db.create_all()
+    return "Database reset successfully."
+
+
     return app
 
 # expose app for gunicorn
@@ -224,3 +232,4 @@ app = create_app()
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
+
