@@ -15,17 +15,23 @@ class User(db.Model):
 
     reports = db.relationship("Report", back_populates="user", cascade="all, delete-orphan")
 
+    def __repr__(self):
+        return f"<User {self.email}>"
+
 class Report(db.Model):
     __tablename__ = "reports"
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
-    description = db.Column(db.Text)
-    photo_filename = db.Column(db.String(300))
-    latitude = db.Column(db.Float)
-    longitude = db.Column(db.Float)
+    description = db.Column(db.Text, nullable=True)
+    photo_filename = db.Column(db.String(300), nullable=True)
+    latitude = db.Column(db.Float, nullable=True)
+    longitude = db.Column(db.Float, nullable=True)
     status = db.Column(db.String(50), default="new")
-    admin_feedback = db.Column(db.Text)
+    admin_feedback = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     user = db.relationship("User", back_populates="reports")
+
+    def __repr__(self):
+        return f"<Report {self.id} {self.title}>"
