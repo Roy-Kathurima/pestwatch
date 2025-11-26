@@ -1,72 +1,60 @@
 <!doctype html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <title>Admin Database - PestWatch</title>
+  <meta charset="utf-8" />
+  <title>Admin - Database</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
   <div class="container">
-    <div class="header">
-      <div class="brand">
-        <div class="logo">PW</div>
-        <div>
-          <h1>Database (admin)</h1>
-        </div>
-      </div>
-      <div class="nav">
+    <header>
+      <h2>Database</h2>
+      <nav>
         <a href="{{ url_for('admin_dashboard') }}">Dashboard</a>
-      </div>
-    </div>
+        <a href="{{ url_for('logout') }}">Logout</a>
+      </nav>
+    </header>
 
-    <div class="card">
-      <h2>Users</h2>
+    <section>
+      <h3>Users</h3>
       <table class="table">
-        <thead><tr><th>Email</th><th>Full name</th><th>Role</th><th>Created</th></tr></thead>
+        <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Created</th></tr></thead>
         <tbody>
           {% for u in users %}
-            <tr><td>{{ u.email }}</td><td>{{ u.fullname }}</td><td>{{ u.role }}</td><td>{{ u.created_at.strftime('%Y-%m-%d %H:%M') }}</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-
-    <div class="card">
-      <h2>Reports</h2>
-      <table class="table">
-        <thead><tr><th>ID</th><th>Title</th><th>User</th><th>Location</th><th>Status</th><th>Created</th></tr></thead>
-        <tbody>
-          {% for r in reports %}
             <tr>
-              <td>{{ r.id }}</td>
-              <td>{{ r.title }}</td>
-              <td>{{ r.user.email }}</td>
-              <td>{% if r.latitude and r.longitude %}{{ r.latitude }}, {{ r.longitude }}{% else %}-{% endif %}</td>
-              <td>{{ r.status }}</td>
-              <td>{{ r.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+              <td>{{ u.id }}</td>
+              <td>{{ u.fullname }}</td>
+              <td>{{ u.email }}</td>
+              <td>{{ u.role }}</td>
+              <td>{{ u.created_at }}</td>
             </tr>
+          {% else %}
+            <tr><td colspan="5">No users</td></tr>
           {% endfor %}
         </tbody>
       </table>
-    </div>
+    </section>
 
-    <div class="card">
-      <h2>Login Events (most recent)</h2>
+    <section>
+      <h3>Login logs</h3>
       <table class="table">
-        <thead><tr><th>Email</th><th>User ID</th><th>IP</th><th>Success</th><th>Time</th></tr></thead>
+        <thead><tr><th>Email</th><th>Success</th><th>Role</th><th>IP</th><th>When</th></tr></thead>
         <tbody>
-          {% for l in logins %}
+          {% for l in logs %}
             <tr>
               <td>{{ l.email }}</td>
-              <td>{{ l.user_id or '-' }}</td>
-              <td>{{ l.ip_address }}</td>
-              <td>{{ 'yes' if l.success else 'no' }}</td>
-              <td>{{ l.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+              <td>{{ 'YES' if l.success else 'NO' }}</td>
+              <td>{{ l.role }}</td>
+              <td>{{ l.ip }}</td>
+              <td>{{ l.timestamp }}</td>
             </tr>
+          {% else %}
+            <tr><td colspan="5">No logs</td></tr>
           {% endfor %}
         </tbody>
       </table>
-    </div>
+    </section>
+
   </div>
 </body>
 </html>
