@@ -2,58 +2,71 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Admin DB - PestWatch</title>
+  <title>Admin Database - PestWatch</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-<div class="container">
-  <h2>Database (admin view)</h2>
+  <div class="container">
+    <div class="header">
+      <div class="brand">
+        <div class="logo">PW</div>
+        <div>
+          <h1>Database (admin)</h1>
+        </div>
+      </div>
+      <div class="nav">
+        <a href="{{ url_for('admin_dashboard') }}">Dashboard</a>
+      </div>
+    </div>
 
-  <h3>Users</h3>
-  <table class="db-table">
-    <thead><tr><th>id</th><th>fullname</th><th>email</th><th>role</th><th>created_at</th></tr></thead>
-    <tbody>
-      {% for u in users %}
-        <tr><td>{{ u.id }}</td><td>{{ u.fullname }}</td><td>{{ u.email }}</td><td>{{ u.role }}</td><td>{{ u.created_at }}</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+    <div class="card">
+      <h2>Users</h2>
+      <table class="table">
+        <thead><tr><th>Email</th><th>Full name</th><th>Role</th><th>Created</th></tr></thead>
+        <tbody>
+          {% for u in users %}
+            <tr><td>{{ u.email }}</td><td>{{ u.fullname }}</td><td>{{ u.role }}</td><td>{{ u.created_at.strftime('%Y-%m-%d %H:%M') }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
 
-  <h3>Reports</h3>
-  <table class="db-table">
-    <thead><tr><th>id</th><th>title</th><th>user</th><th>lat</th><th>lon</th><th>status</th><th>created_at</th></tr></thead>
-    <tbody>
-      {% for r in reports %}
-        <tr>
-          <td>{{ r.id }}</td>
-          <td>{{ r.title }}</td>
-          <td>{{ r.user.email }}</td>
-          <td>{{ r.latitude }}</td>
-          <td>{{ r.longitude }}</td>
-          <td>{{ r.status }}</td>
-          <td>{{ r.created_at }}</td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+    <div class="card">
+      <h2>Reports</h2>
+      <table class="table">
+        <thead><tr><th>ID</th><th>Title</th><th>User</th><th>Location</th><th>Status</th><th>Created</th></tr></thead>
+        <tbody>
+          {% for r in reports %}
+            <tr>
+              <td>{{ r.id }}</td>
+              <td>{{ r.title }}</td>
+              <td>{{ r.user.email }}</td>
+              <td>{% if r.latitude and r.longitude %}{{ r.latitude }}, {{ r.longitude }}{% else %}-{% endif %}</td>
+              <td>{{ r.status }}</td>
+              <td>{{ r.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
 
-  <h3>Login attempts (recent)</h3>
-  <table class="db-table">
-    <thead><tr><th>time</th><th>email</th><th>success</th><th>ip</th><th>role_attempt</th></tr></thead>
-    <tbody>
-      {% for a in attempts %}
-        <tr>
-          <td>{{ a.attempted_at }}</td>
-          <td>{{ a.email }}</td>
-          <td>{{ 'yes' if a.success else 'no' }}</td>
-          <td>{{ a.ip }}</td>
-          <td>{{ a.role_attempt }}</td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-
-  <p><a href="{{ url_for('admin_dashboard') }}?pwd={{ request.args.get('pwd','') }}" class="btn">Back to admin dashboard</a></p>
-</div>
+    <div class="card">
+      <h2>Login Events (most recent)</h2>
+      <table class="table">
+        <thead><tr><th>Email</th><th>User ID</th><th>IP</th><th>Success</th><th>Time</th></tr></thead>
+        <tbody>
+          {% for l in logins %}
+            <tr>
+              <td>{{ l.email }}</td>
+              <td>{{ l.user_id or '-' }}</td>
+              <td>{{ l.ip_address }}</td>
+              <td>{{ 'yes' if l.success else 'no' }}</td>
+              <td>{{ l.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
 </body>
 </html>
