@@ -2,52 +2,85 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Admin - Dashboard</title>
+  <title>Admin Dashboard - PestWatch</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
-<div class="container">
-  <h2>Admin dashboard</h2>
-  <p>Counts: users={{ counts.users }} reports={{ counts.reports }} verified={{ verified_count }}</p>
-  <p><a href="{{ url_for('admin_database') }}?pwd={{ request.args.get('pwd', '') }}" class="btn">Database (users/reports/logins)</a></p>
+  <div class="container">
+    <div class="header">
+      <div class="brand">
+        <div class="logo">PW</div>
+        <div>
+          <h1>Admin Dashboard</h1>
+          <div class="small">Manage reports and view data</div>
+        </div>
+      </div>
+      <div class="nav">
+        <a href="{{ url_for('index') }}">Home</a>
+        <a href="{{ url_for('admin_database') }}">Database</a>
+      </div>
+    </div>
 
-  <div id="map" style="height: 380px; margin-bottom:12px;"></div>
+    <div class="card">
+      <h2>Summary</h2>
+      <div style="display:flex;gap:18px;">
+        <div class="card" style="flex:1">
+          <h3>Users</h3>
+          <p class="small">{{ counts.users }}</p>
+        </div>
+        <div class="card" style="flex:1">
+          <h3>Reports</h3>
+          <p class="small">{{ counts.reports }}</p>
+        </div>
+        <div class="card" style="flex:1">
+          <h3>Verified</h3>
+          <p class="small">{{ verified_count }}</p>
+        </div>
+      </div>
+    </div>
 
-  <h3>Recent reports</h3>
-  <ul>
-    {% for r in reports[:30] %}
-      <li>{{ r.created_at.strftime('%Y-%m-%d %H:%M') }} — {{ r.title }} — by {{ r.user.email }} — status: {{ r.status }}</li>
-    {% else %}
-      <li>No reports.</li>
-    {% endfor %}
-  </ul>
-</div>
+    <div class="card">
+      <h2>Map (all reports)</h2>
+      <div id="map"></div>
+    </div>
+
+    <div class="card">
+      <h2>Recent reports</h2>
+      {% if reports %}
+        <table class="table">
+          <thead><tr><th>Title</th><th>User</th><th>Created</th><th>Status</th></tr></thead>
+          <tbody>
+            {% for r in reports[:20] %}
+              <tr>
+                <td>{{ r.title }}</td>
+                <td>{{ r.user.email }}</td>
+                <td>{{ r.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td>{{ r.status }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="small">No reports yet.</p>
+      {% endif %}
+    </div>
+  </div>
 
 <script>
-  const map = L.map('map').setView([0,0], 2);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19}).addTo(map);
-
-  const reports = [
-    {% for r in reports %}
-      {% if r.latitude and r.longitude %}
-        {lat: {{ r.latitude }}, lon: {{ r.longitude }}, title: "{{ r.title|e }}", user: "{{ r.user.email|e }}"},
-      {% endif %}
-    {% endfor %}
-  ];
-
-  if (reports.length) {
-    const group = [];
-    reports.forEach(r => {
-      const marker = L.marker([r.lat, r.lon]).addTo(map).bindPopup(`<strong>${r.title}</strong><br>${r.user}`);
-      group.push(marker);
-    });
-    const g = L.featureGroup(group);
-    map.fitBounds(g.getBounds().pad(0.2));
-  } else {
-    map.setView([0,0], 2);
-  }
+  const reports = {{ reports | tojson }};
+  const map = L.map('map').setView([0.0236, 37.9062], 6);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ maxZoom:19 }).addTo(map);
+  const bounds = [];
+  reports.forEach(r => {
+    if (r.latitude && r.longitude) {
+      const m = L.marker([r.latitude, r.longitude]).addTo(map);
+      m.bindPopup(`<strong>${r.title}</strong><br>${r.user ? r.user.email : ''}<br>${r.status}`);
+      bounds.push([r.latitude, r.longitude]);
+    }
+  });
+  if (bounds.length) map.fitBounds(bounds, {padding:[40,40]});
 </script>
 </body>
 </html>
