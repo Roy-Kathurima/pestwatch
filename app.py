@@ -1,6 +1,6 @@
 import os
 from flask import (
-    Flask, render_template, redirect, url_for, request, flash, send_from_directory, jsonify
+    Flask, render_template, redirect, url_for, request, flash, send_from_directory, jsonify, abort
 )
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -18,7 +18,6 @@ def create_app():
     db.init_app(app)
 
     with app.app_context():
-        # safe create tables if they don't exist
         db.create_all()
 
     def allowed_file(filename):
@@ -57,22 +56,20 @@ def create_app():
         if request.method == "POST":
             email = request.form.get("email", "").strip().lower()
             password = request.form.get("password", "")
+            ip = request.remote_addr
+            ua = request.headers.get("User-Agent")
             user = User.query.filter_by(email=email).first()
             success = False
+            user_id = None
             if user and check_password_hash(user.password_hash, password):
                 success = True
+                user_id = user.id
                 flash("Login successful.", "success")
-                # log login
-                log = LoginLog(user_id=user.id, email=email, success=True,
-                               ip=request.remote_addr, user_agent=request.headers.get("User-Agent"))
-                db.session.add(log)
+                db.session.add(LoginLog(user_id=user_id, email=email, success=True, ip=ip, user_agent=ua))
                 db.session.commit()
                 return redirect(url_for("user_dashboard", user_id=user.id))
             else:
-                # record failed login with email (user may not exist)
-                log = LoginLog(user_id=user.id if user else None, email=email, success=False,
-                               ip=request.remote_addr, user_agent=request.headers.get("User-Agent"))
-                db.session.add(log)
+                db.session.add(LoginLog(user_id=None if not user else user.id, email=email, success=False, ip=ip, user_agent=ua))
                 db.session.commit()
                 flash("Invalid credentials.", "error")
         return render_template("login.html")
@@ -82,6 +79,7 @@ def create_app():
         if request.method == "POST":
             pwd = request.form.get("password", "")
             if pwd == app.config["ADMIN_PASSWORD"]:
+                flash("Admin login successful.", "success")
                 return redirect(url_for("admin_dashboard"))
             else:
                 flash("Invalid admin password.", "error")
@@ -91,7 +89,17 @@ def create_app():
     def user_dashboard(user_id):
         user = User.query.get_or_404(user_id)
         reports = user.reports
-        return render_template("dashboard.html", user=user, reports=reports)
+        # pass reports as list of dicts for map markers
+        markers = [
+            {
+                "id": r.id,
+                "title": r.title,
+                "lat": r.latitude,
+                "lon": r.longitude,
+                "photo": r.photo_filename
+            } for r in reports if r.latitude is not None and r.longitude is not None
+        ]
+        return render_template("dashboard.html", user=user, reports=reports, markers=markers)
 
     @app.route("/report/new/<int:user_id>", methods=["GET", "POST"])
     def new_report(user_id):
@@ -106,7 +114,7 @@ def create_app():
 
             photo = request.files.get("photo")
             filename = None
-            if photo and allowed_file(photo.filename):
+            if photo and photo.filename and allowed_file(photo.filename):
                 filename = secure_filename(photo.filename)
                 save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
                 photo.save(save_path)
@@ -131,16 +139,26 @@ def create_app():
 
     @app.route("/admin/dashboard")
     def admin_dashboard():
-        # admin dashboard map + reports
         reports = Report.query.order_by(Report.created_at.desc()).all()
         users_count = User.query.count()
         reports_count = Report.query.count()
         verified_count = Report.query.filter_by(status="verified").count()
+        # prepare markers for map (all reports)
+        markers = [
+            {
+                "id": r.id,
+                "title": r.title,
+                "lat": r.latitude,
+                "lon": r.longitude,
+                "user_email": r.user.email if r.user else ""
+            } for r in reports if r.latitude is not None and r.longitude is not None
+        ]
         return render_template(
             "admin_dashboard.html",
             reports=reports,
             counts={"users": users_count, "reports": reports_count},
-            verified_count=verified_count
+            verified_count=verified_count,
+            markers=markers
         )
 
     @app.route("/admin/report/<int:report_id>/feedback", methods=["POST"])
@@ -168,27 +186,17 @@ def create_app():
         logs = LoginLog.query.order_by(LoginLog.timestamp.desc()).limit(500).all()
         return render_template("admin_database.html", users=users, reports=reports, logs=logs)
 
-    @app.route("/init-db")
-    def init_db():
-        """
-        Initialize DB. Use query ?secret=... . To force-recreate (DROP ALL) pass ?secret=...&recreate=1
-        WARNING: recreate=1 will DROP existing tables and data.
-        """
-        secret = request.args.get("secret", "")
-        recreate = request.args.get("recreate", "0") == "1"
-        if secret != app.config["INIT_DB_SECRET"]:
-            return "Unauthorized", 403
-        if recreate:
-            db.drop_all()
-        db.create_all()
-        # optional: create default admin user if not exists (admin role)
-        admin_email = app.config.get("DEFAULT_ADMIN_EMAIL")
-        if admin_email and not User.query.filter_by(email=admin_email).first():
-            u = User(fullname="Administrator", email=admin_email,
-                     password_hash=generate_password_hash("admin123"), role="admin")
-            db.session.add(u)
-            db.session.commit()
-        return "DB initialized", 200
+    @app.route("/admin/reset-db", methods=["POST"])
+    def admin_reset_db():
+        # Danger: use only for reset; require both ADMIN_PASSWORD and RESET_DB_TOKEN env var
+        pwd = request.form.get("admin_password", "")
+        token = request.form.get("reset_token", "")
+        if pwd != app.config["ADMIN_PASSWORD"] or token != app.config.get("RESET_DB_TOKEN"):
+            abort(403)
+        # Drop and recreate all tables
+        db.drop_all(app=app)
+        db.create_all(app=app)
+        return "DB reset complete", 200
 
     @app.errorhandler(404)
     def not_found(e):
