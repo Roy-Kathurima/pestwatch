@@ -2,65 +2,58 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>New report - PestWatch</title>
+  <title>New report - {{ user.fullname }}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
-<div class="container">
-  <h2>New report</h2>
-  <form method="post" enctype="multipart/form-data">
-    <label>Title <input name="title"></label>
-    <label>Description <textarea name="description"></textarea></label>
-    <label>Photo <input type="file" accept="image/*" name="photo"></label>
+  <div class="container">
+    <div class="header">
+      <div class="brand">
+        <div class="logo">PW</div>
+        <div>
+          <h1>Submit report</h1>
+        </div>
+      </div>
+      <div class="nav">
+        <a href="{{ url_for('user_dashboard', user_id=user.id) }}">Back</a>
+      </div>
+    </div>
 
-    <div id="map" style="height: 300px; margin-bottom: 12px;"></div>
-    <p>
-      <button type="button" id="use-location" class="btn">Use device location</button>
-      <small>or click on the map to drop a pin</small>
-    </p>
-
-    <input type="hidden" name="latitude" id="latitude">
-    <input type="hidden" name="longitude" id="longitude">
-
-    <button class="btn" type="submit">Submit report</button>
-  </form>
-</div>
+    <div class="card">
+      <form method="post" enctype="multipart/form-data">
+        <label>Title</label>
+        <input type="text" name="title" required>
+        <label>Description</label>
+        <textarea name="description"></textarea>
+        <label>Photo (optional)</label>
+        <input type="file" name="photo" accept="image/*">
+        <label>Latitude</label>
+        <input type="text" id="latitude" name="latitude" placeholder="e.g., -1.2921">
+        <label>Longitude</label>
+        <input type="text" id="longitude" name="longitude" placeholder="e.g., 36.8219">
+        <button type="button" class="btn-outline" id="use-location">Use device location</button>
+        <div style="height:12px"></div>
+        <button type="submit" class="btn">Submit report</button>
+      </form>
+    </div>
+  </div>
 
 <script>
-  const map = L.map('map').setView([0,0], 2);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19}).addTo(map);
-  let marker = null;
-
-  function setMarker(lat, lon) {
-    if (marker) map.removeLayer(marker);
-    marker = L.marker([lat, lon], {draggable:true}).addTo(map);
-    document.getElementById('latitude').value = lat;
-    document.getElementById('longitude').value = lon;
-    map.setView([lat, lon], 14);
-    marker.on('dragend', function(e){
-      const p = e.target.getLatLng();
-      document.getElementById('latitude').value = p.lat;
-      document.getElementById('longitude').value = p.lng;
-    });
+document.getElementById('use-location').addEventListener('click', function(){
+  if (!navigator.geolocation) {
+    alert('Geolocation not supported by your browser.');
+    return;
   }
-
-  map.on('click', function(e){
-    setMarker(e.latlng.lat, e.latlng.lng);
-  });
-
-  document.getElementById('use-location').addEventListener('click', function(){
-    if (!navigator.geolocation) {
-      alert('Geolocation not supported by your browser.');
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(function(pos){
-      setMarker(pos.coords.latitude, pos.coords.longitude);
-    }, function(err){
-      alert('Unable to get location: ' + (err.message || err.code));
-    }, {enableHighAccuracy:true, timeout:10000});
-  });
+  this.textContent = 'Getting location...';
+  navigator.geolocation.getCurrentPosition(function(pos){
+    document.getElementById('latitude').value = pos.coords.latitude.toFixed(6);
+    document.getElementById('longitude').value = pos.coords.longitude.toFixed(6);
+    document.getElementById('use-location').textContent = 'Use device location';
+  }, function(err){
+    alert('Could not get location: ' + err.message);
+    document.getElementById('use-location').textContent = 'Use device location';
+  }, {enableHighAccuracy:true, timeout:10000});
+});
 </script>
 </body>
 </html>
