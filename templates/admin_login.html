@@ -1,26 +1,21 @@
 <!doctype html>
 <html>
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8" />
   <title>Admin Login - PestWatch</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-  <div class="container">
+  <div class="auth-box">
     <h2>Admin Login</h2>
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% for cat, msg in messages %}
-        <div class="flash-{{ 'success' if cat=='success' else 'error' }}">{{ msg }}</div>
-      {% endfor %}
-    {% endwith %}
-    <div class="card">
-      <form method="post">
-        <label>Admin password</label>
-        <input type="password" name="password" required>
-        <button class="btn" type="submit">Login</button>
-      </form>
-      <p class="small">If correct you'll be redirected to admin dashboard.</p>
-    </div>
+    <form method="post">
+      <label>Email</label>
+      <input name="email" type="email" required>
+      <label>Password</label>
+      <input name="password" type="password" required>
+      <button type="submit" class="btn">Sign in</button>
+    </form>
+    <p><a href="{{ url_for('index') }}">Back to home</a></p>
   </div>
 </body>
 </html>
