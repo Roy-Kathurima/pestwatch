@@ -1,22 +1,8 @@
-/* static/css/style.css */
-body { font-family: Arial, sans-serif; margin:0; padding:0; background:#f6f6f6; color:#222;}
-.container { max-width:1100px; margin:0 auto; padding:18px;}
-.site-header { background:#0b6d3a; color:white; padding:12px 0; box-shadow: 0 2px 6px rgba(0,0,0,0.05);}
-.site-header .container { display:flex; align-items:center; gap:12px; justify-content:space-between; }
-.brand a { color:white; text-decoration:none; font-size:20px; font-weight:700; }
-.top-nav a { margin-left:12px; color:white; text-decoration:none; font-weight:600; }
-.form-box { background:white; padding:14px; border-radius:6px; border:1px solid #e0e0e0; max-width:600px; margin:18px auto;}
-.form-box input, .form-box textarea, .form-box select { display:block; width:100%; padding:8px; margin-bottom:10px; border:1px solid #ccc; border-radius:4px; }
-.btn { background:#2a8f4c; color:white; padding:8px 12px; border:none; border-radius:5px; cursor:pointer; text-decoration:none; display:inline-block; }
-.btn-secondary { background:#6c757d; color:white; padding:8px 12px; border:none; border-radius:5px; cursor:pointer; }
-.btn-danger { background:#c0392b; color:white; padding:8px 12px; border:none; border-radius:5px; cursor:pointer; }
-.flashes { margin:12px 0;}
-.flash { background:#fff8e1; border-left:4px solid #ffd54f; padding:8px; margin-bottom:8px; }
-.data-table { width:100%; border-collapse:collapse; background:white; }
-.data-table th, .data-table td { padding:8px; border:1px solid #ddd; text-align:left; }
-.site-footer { background:#fafafa; padding:12px 0; margin-top:18px; border-top:1px solid #eee; text-align:center; font-size:14px; color:#555;}
-.welcome { text-align:center; background:white; padding:30px; border-radius:6px; margin-top:18px;}
-.admin-card { background:white; padding:16px; border-radius:6px; border:1px solid #e9ecef; margin-bottom:12px; }
-.small { font-size:13px; color:#666; }
-.top-actions { display:flex; gap:10px; align-items:center; }
-.header-links { display:flex; gap:10px; align-items:center; }
+body{font-family: Arial, Helvetica, sans-serif; margin:20px; color:#222}
+h1,h2,h3{color:#153}
+input,textarea{padding:6px;margin:4px 0}
+button{padding:6px 12px;margin-top:8px}
+ul{list-style:none;padding:0}
+li.success{color:green} li.error{color:red}
+table{border-collapse:collapse;width:100%;margin-bottom:1rem}
+table td, table th{padding:6px;border:1px solid #ccc}
