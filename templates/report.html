@@ -1,96 +1,36 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8" />
-  <title>New Report</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<title>New Report</title>
+<link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-  <div class="container">
-    <h2>Submit report</h2>
-    <form method="post" enctype="multipart/form-data">
-      <label>Title</label><input name="title" />
-      <label>Description</label><textarea name="description"></textarea>
-      <label>Photo (optional)</label><input type="file" name="photo" accept="image/*">
-      <div class="coord-row">
-        <div>
-          <label>Latitude</label>
-          <input id="latitude" name="latitude" />
-        </div>
-        <div>
-          <label>Longitude</label>
-          <input id="longitude" name="longitude" />
-        </div>
-      </div>
 
-      <div class="row">
-        <button type="button" id="use-location" class="btn-outline">Use device location</button>
-        <span id="loc-status" class="muted"></span>
-      </div>
+<div class="box">
+<h2>Submit Pest Report</h2>
 
-      <div id="map" style="height: 320px; margin-top:10px;"></div>
+<form method="POST">
 
-      <button type="submit" class="btn">Submit report</button>
-    </form>
+<input name="pest" placeholder="Pest name" required>
+<textarea name="description" placeholder="Description" required></textarea>
 
-    <p><a href="{{ url_for('user_dashboard', user_id=user.id) }}">Back to dashboard</a></p>
-  </div>
+<input id="lat" name="latitude" placeholder="Latitude (optional)">
+<input id="lng" name="longitude" placeholder="Longitude (optional)">
+
+<button type="button" onclick="getLocation()">Use My Location</button>
+
+<button type="submit">Submit Report</button>
+</form>
+</div>
 
 <script>
-  const latInput = document.getElementById('latitude');
-  const lonInput = document.getElementById('longitude');
-
-  const map = L.map('map').setView([0.0, 36.8], 6);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19
-  }).addTo(map);
-
-  let marker = null;
-  function setMarker(lat, lon) {
-    if (marker) map.removeLayer(marker);
-    marker = L.marker([lat, lon]).addTo(map);
-    map.setView([lat, lon], 13);
-  }
-
-  // if coordinates are manually changed, move marker
-  latInput.addEventListener('change', () => {
-    const lat = parseFloat(latInput.value);
-    const lon = parseFloat(lonInput.value) || 0;
-    if (!isNaN(lat) && !isNaN(lon)) setMarker(lat, lon);
-  });
-  lonInput.addEventListener('change', () => {
-    const lat = parseFloat(latInput.value) || 0;
-    const lon = parseFloat(lonInput.value);
-    if (!isNaN(lat) && !isNaN(lon)) setMarker(lat, lon);
-  });
-
-  map.on('click', (e) => {
-    const {lat, lng} = e.latlng;
-    latInput.value = lat;
-    lonInput.value = lng;
-    setMarker(lat, lng);
-  });
-
-  document.getElementById('use-location').addEventListener('click', () => {
-    const status = document.getElementById('loc-status');
-    if (!navigator.geolocation) {
-      status.textContent = 'Geolocation not supported';
-      return;
-    }
-    status.textContent = 'Locating...';
-    navigator.geolocation.getCurrentPosition((pos) => {
-      const lat = pos.coords.latitude;
-      const lon = pos.coords.longitude;
-      latInput.value = lat;
-      lonInput.value = lon;
-      setMarker(lat, lon);
-      status.textContent = 'Location set';
-    }, (err) => {
-      status.textContent = 'Could not get location: ' + err.message;
-    }, {timeout:10000});
-  });
+function getLocation(){
+  navigator.geolocation.getCurrentPosition(pos=>{
+    document.getElementById("lat").value = pos.coords.latitude;
+    document.getElementById("lng").value = pos.coords.longitude;
+  })
+}
 </script>
+
 </body>
 </html>
