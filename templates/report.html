@@ -1,36 +1,46 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 <head>
-<title>New Report</title>
-<link rel="stylesheet" href="/static/css/style.css">
+  <meta charset="utf-8" />
+  <title>New Report - {{ user.fullname }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+  <header class="topbar"><h1>PestWatch</h1></header>
+  <main class="container">
+    <h2>Submit new report</h2>
+    <form method="post" enctype="multipart/form-data" class="form">
+      <label>Title<input name="title" required></label>
+      <label>Description<textarea name="description"></textarea></label>
+      <label>Photo<input type="file" name="photo" accept="image/*"></label>
 
-<div class="box">
-<h2>Submit Pest Report</h2>
+      <div class="geo-row">
+        <label>Latitude<input id="latitude" name="latitude" readonly></label>
+        <label>Longitude<input id="longitude" name="longitude" readonly></label>
+      </div>
 
-<form method="POST">
+      <p>
+        <button type="button" class="btn" id="get-location">Use device location</button>
+        <small>Or fill latitude/longitude manually</small>
+      </p>
 
-<input name="pest" placeholder="Pest name" required>
-<textarea name="description" placeholder="Description" required></textarea>
+      <button class="btn" type="submit">Submit</button>
+    </form>
 
-<input id="lat" name="latitude" placeholder="Latitude (optional)">
-<input id="lng" name="longitude" placeholder="Longitude (optional)">
-
-<button type="button" onclick="getLocation()">Use My Location</button>
-
-<button type="submit">Submit Report</button>
-</form>
-</div>
-
-<script>
-function getLocation(){
-  navigator.geolocation.getCurrentPosition(pos=>{
-    document.getElementById("lat").value = pos.coords.latitude;
-    document.getElementById("lng").value = pos.coords.longitude;
-  })
-}
-</script>
-
+    <script>
+      document.getElementById("get-location").addEventListener("click", function(){
+        if (!navigator.geolocation) {
+          alert("Geolocation not supported by your browser.");
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(function(pos){
+          document.getElementById("latitude").value = pos.coords.latitude;
+          document.getElementById("longitude").value = pos.coords.longitude;
+        }, function(err){
+          alert("Could not get location: " + err.message);
+        });
+      });
+    </script>
+  </main>
 </body>
 </html>
