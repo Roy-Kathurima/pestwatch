@@ -1,51 +1,73 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 <head>
-  <title>Farmer Dashboard</title>
-  <link rel="stylesheet" href="/static/css/style.css">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <meta charset="utf-8" />
+  <title>{{ user.fullname }} - Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <style>
+    #map { height: 320px; border-radius:8px; margin-bottom:12px; }
+    .report-list { margin-top:8px; }
+  </style>
 </head>
 <body>
+  <header class="topbar">
+    <h1>PestWatch</h1>
+    <nav>
+      <a href="{{ url_for('home') }}">Home</a>
+      <a href="{{ url_for('logout') }}">Logout</a>
+    </nav>
+  </header>
 
-<div class="box">
-<h2>Welcome {{ user.name }}</h2>
+  <main class="container">
+    <h2>Welcome, {{ user.fullname }}</h2>
+    <a class="btn" href="{{ url_for('report_new', user_id=user.id) }}">Submit new report</a>
 
-<a class="btn" href="/report/new/{{ user.id }}">Add Report</a>
+    <h3>Your reports</h3>
 
-<h3>Your Reports</h3>
+    <div id="map"></div>
 
-<table>
-<tr><th>Pest</th><th>Description</th><th>Date</th></tr>
-{% for r in reports %}
-<tr>
-<td>{{ r.pest }}</td>
-<td>{{ r.desc }}</td>
-<td>{{ r.date }}</td>
-</tr>
-{% endfor %}
-</table>
+    <div class="report-list">
+      {% if reports %}
+        <ul>
+        {% for r in reports %}
+          <li>
+            <strong>{{ r.title }}</strong> — {{ r.status }} — <small>{{ r.created_at }}</small>
+            {% if r.photo_url %} <a href="{{ r.photo_url }}" target="_blank">photo</a>{% endif %}
+            <br>{{ r.description }}
+          </li>
+        {% endfor %}
+        </ul>
+      {% else %}
+        <p>No reports yet.</p>
+      {% endif %}
+    </div>
 
-</div>
+  </main>
 
-<div id="map"></div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    // reports passed from server as a JSON array
+    const reports = {{ reports | tojson | safe }};
+    const map = L.map('map').setView([0.0236, 37.9062], 6); // Kenya-ish default
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
 
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
-<script>
-const reports = {{ reports | tojson }};
-
-let map = L.map('map').setView([-1.286389, 36.817223], 6);
-
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
-reports.forEach(r => {
-    if(r.lat && r.lng){
-        L.marker([r.lat, r.lng])
-        .addTo(map)
-        .bindPopup("<b>" + r.pest + "</b><br>" + r.desc);
+    // add markers for reports that have lat/lon
+    let hasOne = false;
+    reports.forEach(r => {
+      if (r.latitude && r.longitude) {
+        hasOne = true;
+        const marker = L.marker([r.latitude, r.longitude]).addTo(map);
+        marker.bindPopup(`<b>${r.title}</b><br>${r.description || ''}`);
+      }
+    });
+    if (hasOne) {
+      // fit to all markers
+      const group = L.featureGroup(reports.filter(r=>r.latitude && r.longitude).map(r=>L.marker([r.latitude, r.longitude])));
+      map.fitBounds(group.getBounds().pad(0.2));
     }
-});
-</script>
-
+  </script>
 </body>
 </html>
