@@ -2,20 +2,17 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Admin Login - PestWatch</title>
+  <title>Admin Login</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-  <div class="auth-box">
-    <h2>Admin Login</h2>
-    <form method="post">
-      <label>Email</label>
-      <input name="email" type="email" required>
-      <label>Password</label>
-      <input name="password" type="password" required>
-      <button type="submit" class="btn">Sign in</button>
+  <header class="topbar"><h1>PestWatch - Admin</h1></header>
+  <main class="container">
+    <h2>Admin login</h2>
+    <form method="post" class="form">
+      <label>Admin password<input name="password" type="password" required></label>
+      <button class="btn" type="submit">Login</button>
     </form>
-    <p><a href="{{ url_for('index') }}">Back to home</a></p>
-  </div>
+  </main>
 </body>
 </html>
