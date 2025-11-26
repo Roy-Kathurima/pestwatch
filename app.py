@@ -175,16 +175,20 @@ def create_app():
         db.session.commit()
         return redirect(url_for("admin_dashboard"))
 
-    @app.route("/admin/database")
-    def admin_database():
-        pwd = request.args.get("pwd", "")
-        if pwd != app.config["ADMIN_PASSWORD"]:
-            flash("Admin password required to view database page.", "error")
-            return redirect(url_for("admin_login"))
-        users = User.query.order_by(User.created_at.desc()).all()
-        reports = Report.query.order_by(Report.created_at.desc()).all()
-        logs = LoginLog.query.order_by(LoginLog.timestamp.desc()).limit(500).all()
-        return render_template("admin_database.html", users=users, reports=reports, logs=logs)
+   @app.route("/admin/database", methods=["GET", "POST"])
+def admin_database():
+    if request.method == "POST":
+        pwd = request.form.get("password", "")
+        if pwd == app.config["ADMIN_PASSWORD"]:
+            users = User.query.order_by(User.created_at.desc()).all()
+            reports = Report.query.order_by(Report.created_at.desc()).all()
+            return render_template("admin_database.html", users=users, reports=reports)
+
+        flash("Wrong admin password.", "error")
+        return redirect(url_for("admin_database"))
+
+    return render_template("admin_database_password.html")
+
 
     @app.route("/admin/reset-db", methods=["POST"])
     def admin_reset_db():
@@ -213,3 +217,4 @@ app = create_app()
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
+
