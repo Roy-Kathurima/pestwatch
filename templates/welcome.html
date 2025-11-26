@@ -2,14 +2,30 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>PestWatch</title>
+  <title>PestWatch - Welcome</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
   <div class="container">
-    <h1>PestWatch</h1>
-    <p>Welcome — report pests from your farm.</p>
-    <p><a href="{{ url_for('register') }}" class="btn">Register</a> <a href="{{ url_for('login') }}" class="btn">Login</a> <a href="{{ url_for('admin_login') }}" class="btn">Admin</a></p>
+    <div class="header">
+      <div class="brand">
+        <div class="logo">PW</div>
+        <div>
+          <h1>PestWatch</h1>
+          <div class="small">Report farming pest issues easily</div>
+        </div>
+      </div>
+      <div class="nav">
+        <a href="{{ url_for('register') }}">Register</a>
+        <a href="{{ url_for('login') }}">Login</a>
+        <a href="{{ url_for('admin_login') }}">Admin</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Welcome</h2>
+      <p class="small">A simple app to let farmers report pest problems with optional location and photos. Admin can review and manage reports.</p>
+    </div>
   </div>
 </body>
 </html>
