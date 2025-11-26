@@ -2,10 +2,12 @@ import os
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
+
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key-change-me")
+
     UPLOAD_FOLDER = os.environ.get("UPLOAD_FOLDER", os.path.join(basedir, "uploads"))
-    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024
 
     DATABASE_URL = os.environ.get("DATABASE_URL") or os.environ.get("DATABASE_URI") or ""
     if DATABASE_URL:
@@ -18,4 +20,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
-    RESET_DB_TOKEN = os.environ.get("RESET_DB_TOKEN", "very-secret-reset-token")  # set on Render before using reset endpoint
+    DEFAULT_ADMIN_EMAIL = os.environ.get("DEFAULT_ADMIN_EMAIL", "admin@example.com")
+
+    # a separate secret to allow a controlled DB reset endpoint (set in Render/CICD only)
+    RESET_DB_SECRET = os.environ.get("RESET_DB_SECRET", None)
