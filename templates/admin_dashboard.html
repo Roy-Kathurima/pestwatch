@@ -1,31 +1,40 @@
-{% extends "base.html" %}
-{% block content %}
-<div class="admin-card">
-  <h3>Admin Dashboard</h3>
-  <div class="top-actions">
-    <div>Users: {{ counts.users }} &nbsp; Reports: {{ counts.reports }}</div>
-    <div style="margin-left:auto;">
-      <a class="btn" href="{{ url_for('admin_database') }}?pwd={{ pwd }}">DB View</a>
-    </div>
-  </div>
-</div>
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <style>#map{height:450px;margin-bottom:1rem}</style>
+</head>
+<body>
+  <h2>Admin Dashboard</h2>
+  <p>Users: {{ counts.users }} | Reports: {{ counts.reports }} | Verified: {{ verified_count }}</p>
+  <p><a href="{{ url_for('admin_database') }}?pwd={{ request.args.get('pwd','') }}">DB page</a></p>
 
-{% if reports %}
-  <table class="data-table">
-    <thead><tr><th>ID</th><th>Title</th><th>User</th><th>Status</th><th>Created</th></tr></thead>
-    <tbody>
-      {% for r in reports %}
-        <tr>
-          <td>{{ r.id }}</td>
-          <td>{{ r.title }}</td>
-          <td>{{ r.user.email }}</td>
-          <td>{{ r.status }}</td>
-          <td>{{ r.created_at }}</td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-{% else %}
-  <p>No reports yet.</p>
-{% endif %}
-{% endblock %}
+  <div id="map"></div>
+
+  <h3>Recent Reports</h3>
+  <ul>
+    {% for r in reports %}
+      <li>{{ r.created_at }} - {{ r.title }} by {{ r.user.email if r.user else 'unknown' }} - {{ r.status }}</li>
+    {% endfor %}
+  </ul>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const markers = {{ markers|tojson }};
+    const map = L.map('map').setView([0,0], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+    if(markers.length){
+      const group = [];
+      markers.forEach(m=>{
+        const popup = `${m.title} — by ${m.user_email || 'unknown'}`;
+        L.marker([m.lat,m.lon]).addTo(map).bindPopup(popup);
+        group.push([m.lat,m.lon]);
+      });
+      map.fitBounds(group);
+    }
+  </script>
+</body>
+</html>
