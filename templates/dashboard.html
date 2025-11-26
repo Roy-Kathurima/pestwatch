@@ -2,37 +2,65 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Dashboard - {{ user.fullname }}</title>
+  <title>{{ user.fullname }} - Dashboard</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-  <style>#map{height:400px;margin-bottom:1rem}</style>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
+<div class="container">
   <h2>Welcome, {{ user.fullname }}</h2>
-  <p><a href="{{ url_for('new_report', user_id=user.id) }}">New report</a></p>
+  <p><a href="{{ url_for('new_report', user_id=user.id) }}" class="btn">New report</a></p>
 
-  <div id="map"></div>
+  <div id="map" style="height: 350px; margin-bottom:12px;"></div>
 
   <h3>Your reports</h3>
-  <ul>
+  <ul class="reports-list">
     {% for r in reports %}
-      <li>{{ r.title }} - {{ r.status }} {% if r.latitude %} ({{ r.latitude }},{{ r.longitude }}){% endif %}</li>
+      <li>
+        <strong>{{ r.title }}</strong> — {{ r.created_at.strftime('%Y-%m-%d %H:%M') }} — status: {{ r.status }}
+        {% if r.latitude and r.longitude %} — <a href="#" class="zoom-to" data-lat="{{ r.latitude }}" data-lon="{{ r.longitude }}">view on map</a>{% endif %}
+      </li>
+    {% else %}
+      <li>No reports yet.</li>
     {% endfor %}
   </ul>
+</div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script>
-    const markers = {{ markers|tojson }};
-    const map = L.map('map').setView([0,0], 2);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
-    if(markers.length){
-      const group = [];
-      markers.forEach(m=>{
-        const mk = L.marker([m.lat,m.lon]).addTo(map).bindPopup(m.title || 'Report');
-        group.push([m.lat,m.lon]);
-      });
-      map.fitBounds(group);
-    }
-  </script>
+<script>
+  const map = L.map('map').setView([0,0], 2);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+  }).addTo(map);
+
+  const reports = [
+    {% for r in reports %}
+      {% if r.latitude and r.longitude %}
+        {lat: {{ r.latitude }}, lon: {{ r.longitude }}, title: "{{ r.title|e }}", id: {{ r.id }} },
+      {% endif %}
+    {% endfor %}
+  ];
+
+  if (reports.length) {
+    const group = [];
+    reports.forEach(r => {
+      const m = L.marker([r.lat, r.lon]).addTo(map).bindPopup(r.title);
+      group.push(m);
+    });
+    const g = L.featureGroup(group);
+    map.fitBounds(g.getBounds().pad(0.25));
+  } else {
+    map.setView([0,0], 2);
+  }
+
+  document.querySelectorAll('.zoom-to').forEach(el=>{
+    el.addEventListener('click', (e)=>{
+      e.preventDefault();
+      const lat = parseFloat(el.dataset.lat);
+      const lon = parseFloat(el.dataset.lon);
+      map.setView([lat, lon], 14);
+    });
+  });
+</script>
 </body>
 </html>
