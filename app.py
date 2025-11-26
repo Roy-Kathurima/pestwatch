@@ -89,12 +89,20 @@ def create_app():
                 flash("Invalid admin password.", "error")
         return render_template("admin_login.html")
 
-    @app.route("/user/<int:user_id>/dashboard")
-    def user_dashboard(user_id):
-        user = User.query.get_or_404(user_id)
-        # obtain reports via query so we can order them
-        reports = Report.query.filter_by(user_id=user.id).order_by(Report.created_at.desc()).all()
-        return render_template("dashboard.html", user=user, reports=reports, leaflet_api_key=None)
+   @app.route("/user/<int:user_id>/dashboard")
+def user_dashboard(user_id):
+    user = User.query.get_or_404(user_id)
+
+    # Convert reports into JSON-safe format
+    reports = [{
+        "lat": r.latitude,
+        "lng": r.longitude,
+        "pest": r.pest_name,
+        "desc": r.description,
+        "date": r.created_at.strftime("%Y-%m-%d %H:%M")
+    } for r in user.reports]
+
+    return render_template("dashboard.html", user=user, reports=reports)
 
     @app.route("/report/new/<int:user_id>", methods=["GET", "POST"])
     def new_report(user_id):
@@ -198,3 +206,4 @@ app = create_app()
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
+
