@@ -1,4 +1,3 @@
-# config.py
 import os
 
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -17,5 +16,9 @@ class Config:
         SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(basedir, "pestwatch.db")
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
     ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
     DEFAULT_ADMIN_EMAIL = os.environ.get("DEFAULT_ADMIN_EMAIL", "admin@example.com")
+
+    # secret used to allow initiating / recreating DB from web (set on Render)
+    INIT_DB_SECRET = os.environ.get("INIT_DB_SECRET", "init-secret-change-me")
