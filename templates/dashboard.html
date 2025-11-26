@@ -1,57 +1,51 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8" />
-  <title>{{ user.fullname }} - Dashboard</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <title>Farmer Dashboard</title>
+  <link rel="stylesheet" href="/static/css/style.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h2>Hello, {{ user.fullname }}</h2>
-      <nav>
-        <a href="{{ url_for('user_dashboard', user_id=user.id) }}">Dashboard</a>
-        <a href="{{ url_for('new_report', user_id=user.id) }}">New Report</a>
-        <a href="{{ url_for('logout') }}">Logout</a>
-      </nav>
-    </header>
 
-    <section>
-      <h3>Your reports</h3>
-      <div id="map" style="height: 360px;"></div>
-      <ul class="reports-list">
-        {% for r in reports %}
-          <li>
-            <strong>{{ r.title or 'No title' }}</strong>
-            <p>{{ r.description }}</p>
-            <small>{{ r.created_at }}</small>
-          </li>
-        {% else %}
-          <li>No reports yet</li>
-        {% endfor %}
-      </ul>
-    </section>
-  </div>
+<div class="box">
+<h2>Welcome {{ user.name }}</h2>
+
+<a class="btn" href="/report/new/{{ user.id }}">Add Report</a>
+
+<h3>Your Reports</h3>
+
+<table>
+<tr><th>Pest</th><th>Description</th><th>Date</th></tr>
+{% for r in reports %}
+<tr>
+<td>{{ r.pest }}</td>
+<td>{{ r.desc }}</td>
+<td>{{ r.date }}</td>
+</tr>
+{% endfor %}
+</table>
+
+</div>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <script>
-  const reports = {{ reports | tojson }};
-  const map = L.map('map').setView([0.0, 36.8], 6);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19
-  }).addTo(map);
+const reports = {{ reports | tojson }};
 
-  reports.forEach(r => {
-    if (r.latitude && r.longitude) {
-      const m = L.marker([r.latitude, r.longitude]).addTo(map);
-      m.bindPopup(`<strong>${r.title || ''}</strong><br>${(r.description||'').slice(0,120)}<br><small>${r.created_at||''}</small>`);
+let map = L.map('map').setView([-1.286389, 36.817223], 6);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+reports.forEach(r => {
+    if(r.lat && r.lng){
+        L.marker([r.lat, r.lng])
+        .addTo(map)
+        .bindPopup("<b>" + r.pest + "</b><br>" + r.desc);
     }
-  });
-
-  if (reports.length && reports[0].latitude) {
-    map.setView([reports[0].latitude, reports[0].longitude], 10);
-  }
+});
 </script>
+
 </body>
 </html>
