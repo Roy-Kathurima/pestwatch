@@ -2,52 +2,65 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>New Report</title>
+  <title>New report - PestWatch</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-  <style>#map{height:300px;margin-top:10px}</style>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
-  <h2>New Report for {{ user.fullname }}</h2>
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %} <ul>{% for cat,msg in messages %}<li class="{{cat}}">{{msg}}</li>{% endfor %}</ul>{% endif %}
-  {% endwith %}
+<div class="container">
+  <h2>New report</h2>
   <form method="post" enctype="multipart/form-data">
-    <label>Title<input name="title" required></label><br>
-    <label>Description<textarea name="description"></textarea></label><br>
-    <label>Photo<input name="photo" type="file" accept="image/*"></label><br>
-    <label>Latitude<input id="latitude" name="latitude"></label>
-    <label>Longitude<input id="longitude" name="longitude"></label><br>
-    <button type="button" id="loc-btn">Use device location</button>
-    <button type="submit">Submit</button>
+    <label>Title <input name="title"></label>
+    <label>Description <textarea name="description"></textarea></label>
+    <label>Photo <input type="file" accept="image/*" name="photo"></label>
+
+    <div id="map" style="height: 300px; margin-bottom: 12px;"></div>
+    <p>
+      <button type="button" id="use-location" class="btn">Use device location</button>
+      <small>or click on the map to drop a pin</small>
+    </p>
+
+    <input type="hidden" name="latitude" id="latitude">
+    <input type="hidden" name="longitude" id="longitude">
+
+    <button class="btn" type="submit">Submit report</button>
   </form>
+</div>
 
-  <div id="map"></div>
+<script>
+  const map = L.map('map').setView([0,0], 2);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19}).addTo(map);
+  let marker = null;
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script>
-    const map = L.map('map').setView([0,0], 2);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
-    let marker;
-
-    function updateMarker(lat, lon){
-      if(marker) map.removeLayer(marker);
-      marker = L.marker([lat,lon]).addTo(map);
-      map.setView([lat,lon], 13);
-    }
-
-    document.getElementById('loc-btn').addEventListener('click', ()=>{
-      if(!navigator.geolocation){ alert('Geolocation not supported'); return; }
-      navigator.geolocation.getCurrentPosition(pos=>{
-        const lat = pos.coords.latitude.toFixed(6);
-        const lon = pos.coords.longitude.toFixed(6);
-        document.getElementById('latitude').value = lat;
-        document.getElementById('longitude').value = lon;
-        updateMarker(lat, lon);
-      }, err=>{
-        alert('Could not get location: ' + err.message);
-      }, { enableHighAccuracy: true, timeout: 10000 });
+  function setMarker(lat, lon) {
+    if (marker) map.removeLayer(marker);
+    marker = L.marker([lat, lon], {draggable:true}).addTo(map);
+    document.getElementById('latitude').value = lat;
+    document.getElementById('longitude').value = lon;
+    map.setView([lat, lon], 14);
+    marker.on('dragend', function(e){
+      const p = e.target.getLatLng();
+      document.getElementById('latitude').value = p.lat;
+      document.getElementById('longitude').value = p.lng;
     });
-  </script>
+  }
+
+  map.on('click', function(e){
+    setMarker(e.latlng.lat, e.latlng.lng);
+  });
+
+  document.getElementById('use-location').addEventListener('click', function(){
+    if (!navigator.geolocation) {
+      alert('Geolocation not supported by your browser.');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(function(pos){
+      setMarker(pos.coords.latitude, pos.coords.longitude);
+    }, function(err){
+      alert('Unable to get location: ' + (err.message || err.code));
+    }, {enableHighAccuracy:true, timeout:10000});
+  });
+</script>
 </body>
 </html>
