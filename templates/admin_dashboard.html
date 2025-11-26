@@ -4,74 +4,52 @@
   <meta charset="utf-8" />
   <title>Admin Dashboard</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <style>#map{height:360px;margin-bottom:12px}</style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h2>Admin Dashboard</h2>
-      <nav>
-        <a href="{{ url_for('admin_dashboard') }}">Home</a>
-        <a href="{{ url_for('admin_database') }}">Database</a>
-        <a href="{{ url_for('logout') }}">Logout</a>
-      </nav>
-    </header>
+  <header class="topbar">
+    <h1>Admin - PestWatch</h1>
+    <nav>
+      <a href="{{ url_for('admin_database') }}">Database</a>
+      <a href="{{ url_for('admin_logout') }}">Logout</a>
+    </nav>
+  </header>
+  <main class="container">
+    <h2>All reports</h2>
+    <div id="map"></div>
 
-    <section>
-      <h3>All reports</h3>
-      <div id="map" style="height:360px;"></div>
-      <ul class="reports-list">
-        {% for r in reports %}
-          <li>
-            <strong>{{ r.title or 'No title' }}</strong> — by user {{ r.user_id }}
-            <p>{{ r.description }}</p>
-            <small>{{ r.created_at }}</small>
-          </li>
-        {% else %}
-          <li>No reports yet</li>
-        {% endfor %}
-      </ul>
-    </section>
-
-    <section>
-      <h3>Recent login attempts</h3>
+    <div>
       <table class="table">
-        <thead><tr><th>Email</th><th>Role</th><th>Success</th><th>IP</th><th>At</th></tr></thead>
-        <tbody>
-          {% for log in logs %}
-            <tr>
-              <td>{{ log.email }}</td>
-              <td>{{ log.role }}</td>
-              <td>{{ 'YES' if log.success else 'NO' }}</td>
-              <td>{{ log.ip }}</td>
-              <td>{{ log.timestamp }}</td>
-            </tr>
-          {% else %}
-            <tr><td colspan="5">No logs</td></tr>
-          {% endfor %}
-        </tbody>
+        <thead><tr><th>ID</th><th>Title</th><th>User</th><th>Coords</th><th>Status</th><th>Created</th></tr></thead>
+        <tbody id="reports-table"></tbody>
       </table>
-    </section>
-  </div>
+    </div>
+  </main>
 
-<script>
-  const reports = {{ reports | tojson }};
-  const map = L.map('map').setView([0.0, 36.8], 6);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19
-  }).addTo(map);
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const reports = {{ reports | tojson | safe }};
+    const map = L.map('map').setView([0.0236, 37.9062], 6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-  reports.forEach(r => {
-    if (r.latitude && r.longitude) {
-      const m = L.marker([r.latitude, r.longitude]).addTo(map);
-      m.bindPopup(`<strong>${r.title || ''}</strong><br>${(r.description||'').slice(0,120)}<br><small>${r.created_at||''}</small>`);
+    const tbody = document.getElementById('reports-table');
+    let markers = [];
+    reports.forEach(r=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${r.id}</td><td>${r.title}</td><td>${r.user_id||''}</td>
+                      <td>${r.latitude||''}, ${r.longitude||''}</td>
+                      <td>${r.status}</td><td>${r.created_at}</td>`;
+      tbody.appendChild(tr);
+      if (r.latitude && r.longitude) {
+        const m = L.marker([r.latitude, r.longitude]).addTo(map).bindPopup(`<b>${r.title}</b>`);
+        markers.push(m);
+      }
+    });
+    if (markers.length) {
+      const group = L.featureGroup(markers);
+      map.fitBounds(group.getBounds().pad(0.2));
     }
-  });
-
-  if (reports.length && reports[0].latitude) {
-    map.setView([reports[0].latitude, reports[0].longitude], 8);
-  }
-</script>
+  </script>
 </body>
 </html>
