@@ -1,60 +1,24 @@
-<!doctype html>
 <html>
 <head>
-  <meta charset="utf-8" />
-  <title>Admin - Database</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<title>Database</title>
+<link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h2>Database</h2>
-      <nav>
-        <a href="{{ url_for('admin_dashboard') }}">Dashboard</a>
-        <a href="{{ url_for('logout') }}">Logout</a>
-      </nav>
-    </header>
 
-    <section>
-      <h3>Users</h3>
-      <table class="table">
-        <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Created</th></tr></thead>
-        <tbody>
-          {% for u in users %}
-            <tr>
-              <td>{{ u.id }}</td>
-              <td>{{ u.fullname }}</td>
-              <td>{{ u.email }}</td>
-              <td>{{ u.role }}</td>
-              <td>{{ u.created_at }}</td>
-            </tr>
-          {% else %}
-            <tr><td colspan="5">No users</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </section>
+<div class="box">
+<h2>All Users Logins</h2>
 
-    <section>
-      <h3>Login logs</h3>
-      <table class="table">
-        <thead><tr><th>Email</th><th>Success</th><th>Role</th><th>IP</th><th>When</th></tr></thead>
-        <tbody>
-          {% for l in logs %}
-            <tr>
-              <td>{{ l.email }}</td>
-              <td>{{ 'YES' if l.success else 'NO' }}</td>
-              <td>{{ l.role }}</td>
-              <td>{{ l.ip }}</td>
-              <td>{{ l.timestamp }}</td>
-            </tr>
-          {% else %}
-            <tr><td colspan="5">No logs</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </section>
+<table>
+<tr><th>Name</th><th>Email</th><th>Role</th></tr>
+{% for u in users %}
+<tr>
+<td>{{ u.name }}</td>
+<td>{{ u.email }}</td>
+<td>{{ u.role }}</td>
+</tr>
+{% endfor %}
+</table>
+</div>
 
-  </div>
 </body>
 </html>
