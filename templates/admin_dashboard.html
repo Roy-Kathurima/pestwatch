@@ -1,86 +1,77 @@
 <!doctype html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <title>Admin Dashboard - PestWatch</title>
+  <meta charset="utf-8" />
+  <title>Admin Dashboard</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 </head>
 <body>
   <div class="container">
-    <div class="header">
-      <div class="brand">
-        <div class="logo">PW</div>
-        <div>
-          <h1>Admin Dashboard</h1>
-          <div class="small">Manage reports and view data</div>
-        </div>
-      </div>
-      <div class="nav">
-        <a href="{{ url_for('index') }}">Home</a>
+    <header>
+      <h2>Admin Dashboard</h2>
+      <nav>
+        <a href="{{ url_for('admin_dashboard') }}">Home</a>
         <a href="{{ url_for('admin_database') }}">Database</a>
-      </div>
-    </div>
+        <a href="{{ url_for('logout') }}">Logout</a>
+      </nav>
+    </header>
 
-    <div class="card">
-      <h2>Summary</h2>
-      <div style="display:flex;gap:18px;">
-        <div class="card" style="flex:1">
-          <h3>Users</h3>
-          <p class="small">{{ counts.users }}</p>
-        </div>
-        <div class="card" style="flex:1">
-          <h3>Reports</h3>
-          <p class="small">{{ counts.reports }}</p>
-        </div>
-        <div class="card" style="flex:1">
-          <h3>Verified</h3>
-          <p class="small">{{ verified_count }}</p>
-        </div>
-      </div>
-    </div>
+    <section>
+      <h3>All reports</h3>
+      <div id="map" style="height:360px;"></div>
+      <ul class="reports-list">
+        {% for r in reports %}
+          <li>
+            <strong>{{ r.title or 'No title' }}</strong> — by user {{ r.user_id }}
+            <p>{{ r.description }}</p>
+            <small>{{ r.created_at }}</small>
+          </li>
+        {% else %}
+          <li>No reports yet</li>
+        {% endfor %}
+      </ul>
+    </section>
 
-    <div class="card">
-      <h2>Map (all reports)</h2>
-      <div id="map"></div>
-    </div>
-
-    <div class="card">
-      <h2>Recent reports</h2>
-      {% if reports %}
-        <table class="table">
-          <thead><tr><th>Title</th><th>User</th><th>Created</th><th>Status</th></tr></thead>
-          <tbody>
-            {% for r in reports[:20] %}
-              <tr>
-                <td>{{ r.title }}</td>
-                <td>{{ r.user.email }}</td>
-                <td>{{ r.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
-                <td>{{ r.status }}</td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      {% else %}
-        <p class="small">No reports yet.</p>
-      {% endif %}
-    </div>
+    <section>
+      <h3>Recent login attempts</h3>
+      <table class="table">
+        <thead><tr><th>Email</th><th>Role</th><th>Success</th><th>IP</th><th>At</th></tr></thead>
+        <tbody>
+          {% for log in logs %}
+            <tr>
+              <td>{{ log.email }}</td>
+              <td>{{ log.role }}</td>
+              <td>{{ 'YES' if log.success else 'NO' }}</td>
+              <td>{{ log.ip }}</td>
+              <td>{{ log.timestamp }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="5">No logs</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
   </div>
 
 <script>
   const reports = {{ reports | tojson }};
-  const map = L.map('map').setView([0.0236, 37.9062], 6);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ maxZoom:19 }).addTo(map);
-  const bounds = [];
+  const map = L.map('map').setView([0.0, 36.8], 6);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19
+  }).addTo(map);
+
   reports.forEach(r => {
     if (r.latitude && r.longitude) {
       const m = L.marker([r.latitude, r.longitude]).addTo(map);
-      m.bindPopup(`<strong>${r.title}</strong><br>${r.user ? r.user.email : ''}<br>${r.status}`);
-      bounds.push([r.latitude, r.longitude]);
+      m.bindPopup(`<strong>${r.title || ''}</strong><br>${(r.description||'').slice(0,120)}<br><small>${r.created_at||''}</small>`);
     }
   });
-  if (bounds.length) map.fitBounds(bounds, {padding:[40,40]});
+
+  if (reports.length && reports[0].latitude) {
+    map.setView([reports[0].latitude, reports[0].longitude], 8);
+  }
 </script>
 </body>
 </html>
