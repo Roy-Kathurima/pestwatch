@@ -1,36 +1,28 @@
 import os
 from flask import (
-    Flask, render_template, redirect, url_for, request,
-    flash, send_from_directory, jsonify
+    Flask, render_template, redirect, url_for, request, flash, send_from_directory, jsonify
 )
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
-
 from config import Config
-from models import db, User, Report
+from models import db, User, Report, LoginLog
 
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
-
 
 def create_app():
     app = Flask(__name__, static_folder="static", template_folder="templates")
     app.config.from_object(Config)
 
-    # Ensure uploads folder exists
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
-    # Init DB
     db.init_app(app)
 
-    # Create tables
     with app.app_context():
+        # safe create tables if they don't exist
         db.create_all()
 
-    # Helper: check allowed file
     def allowed_file(filename):
         return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
-
-    # ----------------------- ROUTES -----------------------
 
     @app.route("/")
     def index():
@@ -42,15 +34,12 @@ def create_app():
             fullname = request.form.get("fullname", "").strip()
             email = request.form.get("email", "").strip().lower()
             password = request.form.get("password", "")
-
             if not fullname or not email or not password:
                 flash("Fill all required fields.", "error")
                 return redirect(url_for("register"))
-
             if User.query.filter_by(email=email).first():
                 flash("Email already registered.", "error")
                 return redirect(url_for("register"))
-
             user = User(
                 fullname=fullname,
                 email=email,
@@ -59,24 +48,33 @@ def create_app():
             )
             db.session.add(user)
             db.session.commit()
-
-            flash("Registration successful.", "success")
+            flash("Registration successful. You can now log in.", "success")
             return redirect(url_for("login"))
-
         return render_template("register.html")
 
     @app.route("/login", methods=["GET", "POST"])
     def login():
         if request.method == "POST":
-            email = request.form.get("email", "").lower()
+            email = request.form.get("email", "").strip().lower()
             password = request.form.get("password", "")
-
             user = User.query.filter_by(email=email).first()
+            success = False
             if user and check_password_hash(user.password_hash, password):
+                success = True
+                flash("Login successful.", "success")
+                # log login
+                log = LoginLog(user_id=user.id, email=email, success=True,
+                               ip=request.remote_addr, user_agent=request.headers.get("User-Agent"))
+                db.session.add(log)
+                db.session.commit()
                 return redirect(url_for("user_dashboard", user_id=user.id))
-
-            flash("Invalid credentials.", "error")
-
+            else:
+                # record failed login with email (user may not exist)
+                log = LoginLog(user_id=user.id if user else None, email=email, success=False,
+                               ip=request.remote_addr, user_agent=request.headers.get("User-Agent"))
+                db.session.add(log)
+                db.session.commit()
+                flash("Invalid credentials.", "error")
         return render_template("login.html")
 
     @app.route("/admin-login", methods=["GET", "POST"])
@@ -85,8 +83,8 @@ def create_app():
             pwd = request.form.get("password", "")
             if pwd == app.config["ADMIN_PASSWORD"]:
                 return redirect(url_for("admin_dashboard"))
-            flash("Invalid admin password.", "error")
-
+            else:
+                flash("Invalid admin password.", "error")
         return render_template("admin_login.html")
 
     @app.route("/user/<int:user_id>/dashboard")
@@ -98,19 +96,16 @@ def create_app():
     @app.route("/report/new/<int:user_id>", methods=["GET", "POST"])
     def new_report(user_id):
         user = User.query.get_or_404(user_id)
-
         if request.method == "POST":
             title = request.form.get("title", "Untitled")
             description = request.form.get("description", "")
             lat = request.form.get("latitude")
             lon = request.form.get("longitude")
-
             lat_val = float(lat) if lat else None
             lon_val = float(lon) if lon else None
 
             photo = request.files.get("photo")
             filename = None
-
             if photo and allowed_file(photo.filename):
                 filename = secure_filename(photo.filename)
                 save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
@@ -119,17 +114,15 @@ def create_app():
             report = Report(
                 title=title,
                 description=description,
+                photo_filename=filename,
                 latitude=lat_val,
                 longitude=lon_val,
-                photo_filename=filename,
                 user=user
             )
             db.session.add(report)
             db.session.commit()
-
-            flash("Report submitted successfully!", "success")
+            flash("Report submitted. Thank you!", "success")
             return redirect(url_for("user_dashboard", user_id=user.id))
-
         return render_template("report.html", user=user)
 
     @app.route("/uploads/<filename>")
@@ -138,11 +131,11 @@ def create_app():
 
     @app.route("/admin/dashboard")
     def admin_dashboard():
+        # admin dashboard map + reports
         reports = Report.query.order_by(Report.created_at.desc()).all()
         users_count = User.query.count()
         reports_count = Report.query.count()
         verified_count = Report.query.filter_by(status="verified").count()
-
         return render_template(
             "admin_dashboard.html",
             reports=reports,
@@ -150,30 +143,64 @@ def create_app():
             verified_count=verified_count
         )
 
+    @app.route("/admin/report/<int:report_id>/feedback", methods=["POST"])
+    def admin_feedback(report_id):
+        pwd = request.form.get("admin_password", "")
+        if pwd != app.config["ADMIN_PASSWORD"]:
+            return jsonify({"error": "unauthorized"}), 403
+        feedback = request.form.get("feedback", "")
+        status = request.form.get("status", "")
+        report = Report.query.get_or_404(report_id)
+        report.admin_feedback = feedback
+        if status:
+            report.status = status
+        db.session.commit()
+        return redirect(url_for("admin_dashboard"))
+
     @app.route("/admin/database")
     def admin_database():
         pwd = request.args.get("pwd", "")
         if pwd != app.config["ADMIN_PASSWORD"]:
-            flash("Admin password required.", "error")
+            flash("Admin password required to view database page.", "error")
             return redirect(url_for("admin_login"))
-
         users = User.query.order_by(User.created_at.desc()).all()
         reports = Report.query.order_by(Report.created_at.desc()).all()
+        logs = LoginLog.query.order_by(LoginLog.timestamp.desc()).limit(500).all()
+        return render_template("admin_database.html", users=users, reports=reports, logs=logs)
 
-        return render_template("admin_database.html", users=users, reports=reports)
+    @app.route("/init-db")
+    def init_db():
+        """
+        Initialize DB. Use query ?secret=... . To force-recreate (DROP ALL) pass ?secret=...&recreate=1
+        WARNING: recreate=1 will DROP existing tables and data.
+        """
+        secret = request.args.get("secret", "")
+        recreate = request.args.get("recreate", "0") == "1"
+        if secret != app.config["INIT_DB_SECRET"]:
+            return "Unauthorized", 403
+        if recreate:
+            db.drop_all()
+        db.create_all()
+        # optional: create default admin user if not exists (admin role)
+        admin_email = app.config.get("DEFAULT_ADMIN_EMAIL")
+        if admin_email and not User.query.filter_by(email=admin_email).first():
+            u = User(fullname="Administrator", email=admin_email,
+                     password_hash=generate_password_hash("admin123"), role="admin")
+            db.session.add(u)
+            db.session.commit()
+        return "DB initialized", 200
 
-    # Error handlers
     @app.errorhandler(404)
-    def error_404(e):
+    def not_found(e):
         return render_template("404.html"), 404
 
     @app.errorhandler(500)
-    def error_500(e):
+    def internal_error(e):
         return render_template("500.html"), 500
 
     return app
 
-
+# expose app for gunicorn
 app = create_app()
 
 if __name__ == "__main__":
