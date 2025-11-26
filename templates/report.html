@@ -1,14 +1,53 @@
-{% extends "base.html" %}
-{% block content %}
-<div class="form-box">
-  <h3>New Report</h3>
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>New Report</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <style>#map{height:300px;margin-top:10px}</style>
+</head>
+<body>
+  <h2>New Report for {{ user.fullname }}</h2>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %} <ul>{% for cat,msg in messages %}<li class="{{cat}}">{{msg}}</li>{% endfor %}</ul>{% endif %}
+  {% endwith %}
   <form method="post" enctype="multipart/form-data">
-    <input name="title" placeholder="Title" required />
-    <textarea name="description" placeholder="Describe the pest..."></textarea>
-    <input name="latitude" placeholder="Latitude (optional)" />
-    <input name="longitude" placeholder="Longitude (optional)" />
-    <input name="photo" type="file" />
-    <button class="btn">Submit Report</button>
+    <label>Title<input name="title" required></label><br>
+    <label>Description<textarea name="description"></textarea></label><br>
+    <label>Photo<input name="photo" type="file" accept="image/*"></label><br>
+    <label>Latitude<input id="latitude" name="latitude"></label>
+    <label>Longitude<input id="longitude" name="longitude"></label><br>
+    <button type="button" id="loc-btn">Use device location</button>
+    <button type="submit">Submit</button>
   </form>
-</div>
-{% endblock %}
+
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([0,0], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+    let marker;
+
+    function updateMarker(lat, lon){
+      if(marker) map.removeLayer(marker);
+      marker = L.marker([lat,lon]).addTo(map);
+      map.setView([lat,lon], 13);
+    }
+
+    document.getElementById('loc-btn').addEventListener('click', ()=>{
+      if(!navigator.geolocation){ alert('Geolocation not supported'); return; }
+      navigator.geolocation.getCurrentPosition(pos=>{
+        const lat = pos.coords.latitude.toFixed(6);
+        const lon = pos.coords.longitude.toFixed(6);
+        document.getElementById('latitude').value = lat;
+        document.getElementById('longitude').value = lon;
+        updateMarker(lat, lon);
+      }, err=>{
+        alert('Could not get location: ' + err.message);
+      }, { enableHighAccuracy: true, timeout: 10000 });
+    });
+  </script>
+</body>
+</html>
