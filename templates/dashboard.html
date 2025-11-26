@@ -8,59 +8,80 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
-<div class="container">
-  <h2>Welcome, {{ user.fullname }}</h2>
-  <p><a href="{{ url_for('new_report', user_id=user.id) }}" class="btn">New report</a></p>
+  <div class="container">
+    <div class="header">
+      <div class="brand">
+        <div class="logo">PW</div>
+        <div>
+          <h1>Welcome, {{ user.fullname }}</h1>
+          <div class="small">{{ user.email }}</div>
+        </div>
+      </div>
+      <div class="nav">
+        <a href="{{ url_for('index') }}">Home</a>
+        <a href="{{ url_for('new_report', user_id=user.id) }}">New report</a>
+      </div>
+    </div>
 
-  <div id="map" style="height: 350px; margin-bottom:12px;"></div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+        <div class="flash-{{ 'success' if cat=='success' else 'error' }}">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
 
-  <h3>Your reports</h3>
-  <ul class="reports-list">
-    {% for r in reports %}
-      <li>
-        <strong>{{ r.title }}</strong> — {{ r.created_at.strftime('%Y-%m-%d %H:%M') }} — status: {{ r.status }}
-        {% if r.latitude and r.longitude %} — <a href="#" class="zoom-to" data-lat="{{ r.latitude }}" data-lon="{{ r.longitude }}">view on map</a>{% endif %}
-      </li>
-    {% else %}
-      <li>No reports yet.</li>
-    {% endfor %}
-  </ul>
-</div>
-
-<script>
-  const map = L.map('map').setView([0,0], 2);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-  }).addTo(map);
-
-  const reports = [
-    {% for r in reports %}
-      {% if r.latitude and r.longitude %}
-        {lat: {{ r.latitude }}, lon: {{ r.longitude }}, title: "{{ r.title|e }}", id: {{ r.id }} },
+    <div class="card">
+      <h2>Your reports</h2>
+      {% if reports %}
+        <table class="table">
+          <thead><tr><th>Title</th><th>Created</th><th>Status</th><th>Location</th></tr></thead>
+          <tbody>
+            {% for r in reports %}
+              <tr>
+                <td>{{ r.title }}</td>
+                <td>{{ r.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td>{{ r.status }}</td>
+                <td>
+                  {% if r.latitude and r.longitude %}
+                    {{ '%.5f'|format(r.latitude) }}, {{ '%.5f'|format(r.longitude) }}
+                  {% else %}
+                    -
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="small">No reports yet. Submit one using "New report".</p>
       {% endif %}
-    {% endfor %}
-  ];
+    </div>
 
-  if (reports.length) {
-    const group = [];
-    reports.forEach(r => {
-      const m = L.marker([r.lat, r.lon]).addTo(map).bindPopup(r.title);
-      group.push(m);
-    });
-    const g = L.featureGroup(group);
-    map.fitBounds(g.getBounds().pad(0.25));
-  } else {
-    map.setView([0,0], 2);
-  }
+    <div class="card">
+      <h2>Map (your reports)</h2>
+      <div id="map"></div>
+      <p class="small">Markers show report locations (if provided).</p>
+    </div>
+  </div>
 
-  document.querySelectorAll('.zoom-to').forEach(el=>{
-    el.addEventListener('click', (e)=>{
-      e.preventDefault();
-      const lat = parseFloat(el.dataset.lat);
-      const lon = parseFloat(el.dataset.lon);
-      map.setView([lat, lon], 14);
-    });
-  });
-</script>
+  <script>
+    const reports = {{ reports | tojson }};
+    const map = L.map('map').setView([0.0236, 37.9062], 6); // Kenya-ish default
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ maxZoom:19 }).addTo(map);
+
+    if (reports.length === 0) {
+      // center for no markers
+      map.setView([0.0236,37.9062],6);
+    } else {
+      let bounds = [];
+      reports.forEach(r => {
+        if (r.latitude && r.longitude) {
+          const m = L.marker([r.latitude, r.longitude]).addTo(map);
+          m.bindPopup(`<strong>${r.title}</strong><br>${r.description || ''}`);
+          bounds.push([r.latitude, r.longitude]);
+        }
+      });
+      if (bounds.length) map.fitBounds(bounds, {padding:[40,40]});
+    }
+  </script>
 </body>
 </html>
