@@ -1,16 +1,26 @@
 <!doctype html>
 <html>
-<head><meta charset="utf-8"><title>Login</title><link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"></head>
+<head>
+  <meta charset="utf-8">
+  <title>Login - PestWatch</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
 <body>
+<div class="container">
   <h2>Login</h2>
   {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %} <ul>{% for cat,msg in messages %}<li class="{{cat}}">{{msg}}</li>{% endfor %}</ul>{% endif %}
+    {% if messages %}
+      <div class="flash-list">
+        {% for cat,msg in messages %}<div class="flash {{cat}}">{{msg}}</div>{% endfor %}
+      </div>
+    {% endif %}
   {% endwith %}
   <form method="post">
-    <label>Email<input name="email" type="email" required></label><br>
-    <label>Password<input name="password" type="password" required></label><br>
-    <button type="submit">Login</button>
+    <label>Email<input name="email" type="email" required></label>
+    <label>Password<input name="password" type="password" required></label>
+    <button class="btn" type="submit">Login</button>
   </form>
   <p><a href="{{ url_for('register') }}">Register</a></p>
+</div>
 </body>
 </html>
