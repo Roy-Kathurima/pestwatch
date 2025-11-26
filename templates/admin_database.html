@@ -1,37 +1,30 @@
-{% extends "base.html" %}
-{% block content %}
-<h3>Database (Admin)</h3>
-
-<h4>Users</h4>
-<table class="data-table">
-  <thead><tr><th>ID</th><th>Fullname</th><th>Email</th><th>Role</th><th>Created</th></tr></thead>
-  <tbody>
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Admin - Database</title><link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"></head>
+<body>
+  <h2>Admin Database</h2>
+  <p><strong>Users</strong></p>
+  <table border="1">
+    <tr><th>ID</th><th>Fullname</th><th>Email</th><th>Role</th><th>Created At</th></tr>
     {% for u in users %}
-      <tr>
-        <td>{{ u.id }}</td>
-        <td>{{ u.fullname }}</td>
-        <td>{{ u.email }}</td>
-        <td>{{ u.role }}</td>
-        <td>{{ u.created_at }}</td>
-      </tr>
+      <tr><td>{{u.id}}</td><td>{{u.fullname}}</td><td>{{u.email}}</td><td>{{u.role}}</td><td>{{u.created_at}}</td></tr>
     {% endfor %}
-  </tbody>
-</table>
+  </table>
 
-<h4 style="margin-top:18px;">Reports</h4>
-<table class="data-table">
-  <thead><tr><th>ID</th><th>Title</th><th>User</th><th>Status</th><th>Feedback</th><th>Created</th></tr></thead>
-  <tbody>
+  <p><strong>Reports</strong></p>
+  <table border="1">
+    <tr><th>ID</th><th>Title</th><th>User</th><th>Lat</th><th>Lon</th><th>Status</th><th>Created</th></tr>
     {% for r in reports %}
-      <tr>
-        <td>{{ r.id }}</td>
-        <td>{{ r.title }}</td>
-        <td>{{ r.user.email }}</td>
-        <td>{{ r.status }}</td>
-        <td>{{ r.admin_feedback or '' }}</td>
-        <td>{{ r.created_at }}</td>
-      </tr>
+      <tr><td>{{r.id}}</td><td>{{r.title}}</td><td>{{ r.user.email if r.user else 'unknown' }}</td><td>{{r.latitude}}</td><td>{{r.longitude}}</td><td>{{r.status}}</td><td>{{r.created_at}}</td></tr>
     {% endfor %}
-  </tbody>
-</table>
-{% endblock %}
+  </table>
+
+  <p><strong>Login Logs (recent)</strong></p>
+  <table border="1">
+    <tr><th>ID</th><th>Timestamp</th><th>Email</th><th>Success</th><th>IP</th><th>User-Agent</th></tr>
+    {% for log in logs %}
+      <tr><td>{{log.id}}</td><td>{{log.timestamp}}</td><td>{{log.email}}</td><td>{{log.success}}</td><td>{{log.ip}}</td><td>{{log.user_agent}}</td></tr>
+    {% endfor %}
+  </table>
+</body>
+</html>
