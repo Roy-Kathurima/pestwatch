@@ -1,28 +1,21 @@
 <!doctype html>
 <html>
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8" />
   <title>Login - PestWatch</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-  <div class="container">
-    <h2>Login</h2>
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% for cat, msg in messages %}
-        <div class="flash-{{ 'success' if cat=='success' else 'error' }}">{{ msg }}</div>
-      {% endfor %}
-    {% endwith %}
-    <div class="card">
-      <form method="post">
-        <label>Email</label>
-        <input type="email" name="email" required>
-        <label>Password</label>
-        <input type="password" name="password" required>
-        <button class="btn" type="submit">Login</button>
-        <a class="btn-outline" href="{{ url_for('register') }}">Register</a>
-      </form>
-    </div>
+  <div class="auth-box">
+    <h2>Farmer Login</h2>
+    <form method="post">
+      <label>Email</label>
+      <input name="email" type="email" required>
+      <label>Password</label>
+      <input name="password" type="password" required>
+      <button type="submit" class="btn">Login</button>
+    </form>
+    <p>Are you admin? <a href="{{ url_for('admin_login') }}">Admin login</a></p>
   </div>
 </body>
 </html>
