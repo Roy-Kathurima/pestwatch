@@ -6,16 +6,15 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-  <div class="auth-box">
-    <h2>Farmer Login</h2>
-    <form method="post">
-      <label>Email</label>
-      <input name="email" type="email" required>
-      <label>Password</label>
-      <input name="password" type="password" required>
-      <button type="submit" class="btn">Login</button>
+  <header class="topbar"><h1>PestWatch</h1></header>
+  <main class="container">
+    <h2>Login</h2>
+    <form method="post" class="form">
+      <label>Email<input name="email" type="email" required></label>
+      <label>Password<input name="password" type="password" required></label>
+      <button class="btn" type="submit">Login</button>
     </form>
-    <p>Are you admin? <a href="{{ url_for('admin_login') }}">Admin login</a></p>
-  </div>
+    <p><a href="{{ url_for('register') }}">Register</a></p>
+  </main>
 </body>
 </html>
