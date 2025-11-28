@@ -1,9 +1,0 @@
-{% extends "base.html" %}
-{% block content %}
-  <h2>Register (Farmer)</h2>
-  <form method="post" action="{{ url_for('auth.register') }}">
-    <label>Username<br><input name="username"></label><br>
-    <label>Password<br><input type="password" name="password"></label><br>
-    <button type="submit">Register</button>
-  </form>
-{% endblock %}
