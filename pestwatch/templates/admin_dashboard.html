@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+  <h2>Admin Dashboard</h2>
+  <p><a href="{{ url_for('admin.users') }}">View Farmers</a> | <a href="{{ url_for('admin.alerts') }}">View Alerts</a></p>
+  <h3>Recent Reports</h3>
+  <table border="1" style="width:100%;">
+    <tr><th>ID</th><th>Pest</th><th>Farmer</th><th>Location</th><th>Image</th><th>Date</th></tr>
+    {% for r in reports %}
+    <tr>
+      <td>{{r.id}}</td>
+      <td>{{r.pest_name}}</td>
+      <td>{{r.user.username}}</td>
+      <td>{{r.latitude}}, {{r.longitude}}</td>
+      <td>
+        {% if r.image %}
+          <a href="{{ url_for('uploaded_file', filename=r.image) }}" target="_blank">View</a>
+        {% endif %}
+      </td>
+      <td>{{ r.created_at }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+{% endblock %}
