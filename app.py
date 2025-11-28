@@ -13,10 +13,10 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "replace-this-secret")
-# Default to sqlite for local dev; in production set DATABASE_URL env var (postgres://...)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///pestwatch.db")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
 db = SQLAlchemy(app)
 
 # ----------------------
@@ -28,12 +28,12 @@ class User(db.Model):
     fullname = db.Column(db.String(120), nullable=False)
     email = db.Column(db.String(200), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
-    role = db.Column(db.String(20), default="farmer")  # farmer or admin
+    role = db.Column(db.String(20), default="farmer")
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    # relationship: reports via Report.user_id
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
 
 class Report(db.Model):
     __tablename__ = "reports"
@@ -48,18 +48,20 @@ class Report(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
 
+
 class LoginLog(db.Model):
     __tablename__ = "login_logs"
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, nullable=True)  # null if anonymous
+    user_id = db.Column(db.Integer, nullable=True)
     email = db.Column(db.String(200), nullable=True)
     ip = db.Column(db.String(100), nullable=True)
     success = db.Column(db.Boolean, default=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
-# create tables if missing
+
 with app.app_context():
     db.create_all()
+
 
 # ----------------------
 # Helpers
@@ -69,6 +71,7 @@ def current_user():
     if not uid:
         return None
     return User.query.get(uid)
+
 
 def reports_to_dictlist(reports):
     out = []
@@ -87,79 +90,83 @@ def reports_to_dictlist(reports):
         })
     return out
 
+
 # ----------------------
 # Routes
 # ----------------------
 @app.route("/")
 def home():
-    # Use welcome.html as you said you have that file
     return render_template("welcome.html", user=current_user())
 
-# Register
-@app.route("/register", methods=["GET","POST"])
+
+@app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
         fullname = request.form.get("fullname")
         email = request.form.get("email")
         password = request.form.get("password")
+
         if not (fullname and email and password):
             flash("Please fill all fields", "danger")
             return redirect(url_for("register"))
+
         if User.query.filter_by(email=email).first():
             flash("Email already registered", "warning")
             return redirect(url_for("register"))
+
         u = User(fullname=fullname, email=email, password_hash=generate_password_hash(password))
         db.session.add(u)
         db.session.commit()
+
         flash("Registration successful. Please log in.", "success")
         return redirect(url_for("login"))
+
     return render_template("register.html")
 
-# Login
-@app.route("/login", methods=["GET","POST"])
+
+@app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         email = request.form.get("email")
         password = request.form.get("password")
+
         user = User.query.filter_by(email=email).first()
         log = LoginLog(user_id=(user.id if user else None), email=email, ip=request.remote_addr)
+
         if user and user.check_password(password):
             session["user_id"] = user.id
             log.success = True
-            db.session.add(log)
-            db.session.commit()
             flash("Logged in", "success")
             return redirect(url_for("user_dashboard", user_id=user.id))
         else:
             log.success = False
-            db.session.add(log)
-            db.session.commit()
             flash("Invalid credentials", "danger")
             return redirect(url_for("login"))
+
+        db.session.add(log)
+        db.session.commit()
+
     return render_template("login.html")
 
-# Logout
+
 @app.route("/logout")
 def logout():
     session.pop("user_id", None)
     flash("Logged out", "info")
     return redirect(url_for("home"))
 
-# User dashboard
+
 @app.route("/user/<int:user_id>/dashboard")
 def user_dashboard(user_id):
     user = User.query.get_or_404(user_id)
-    # ensure it's the logged-in user or show read-only view
-    # fetch reports via query (fixes InstrumentedList ordering issue)
     reports = Report.query.filter_by(user_id=user.id).order_by(Report.created_at.desc()).all()
-    # convert to JSON-safe structure for leaflet
-    reports_json = reports_to_dictlist(reports)
-    return render_template("dashboard.html", user=user, reports=reports_json)
+    return render_template("dashboard.html", user=user, reports=reports_to_dictlist(reports))
 
-# New report (farmer)
-@app.route("/report/new/<int:user_id>", methods=["GET","POST"])
+
+@app.route("/report/new/<int:user_id>", methods=["GET", "POST"])
 def report_new(user_id):
     user = User.query.get_or_404(user_id)
+
     if request.method == "POST":
         title = request.form.get("title")
         description = request.form.get("description")
@@ -167,37 +174,40 @@ def report_new(user_id):
         lon = request.form.get("longitude")
         file = request.files.get("photo")
         filename = None
+
         if file and file.filename:
             filename = secure_filename(f"{int(datetime.utcnow().timestamp())}_{file.filename}")
             file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
-        # convert lat lon
-        latitude = float(lat) if lat else None
-        longitude = float(lon) if lon else None
+
         r = Report(
             title=title or "No title",
             description=description,
             photo_filename=filename,
-            latitude=latitude,
-            longitude=longitude,
+            latitude=float(lat) if lat else None,
+            longitude=float(lon) if lon else None,
             user_id=user.id
         )
+
         db.session.add(r)
         db.session.commit()
         flash("Report submitted", "success")
         return redirect(url_for("user_dashboard", user_id=user.id))
+
     return render_template("report_new.html", user=user)
 
-# Serve uploaded images (optional - static route works too)
+
 @app.route("/uploads/<path:filename>")
 def uploads(filename):
     return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
 
-# Admin login (separate password)
-@app.route("/admin-login", methods=["GET","POST"])
+
+# ✅ ADMIN LOGIN (FIXED)
+@app.route("/admin-login", methods=["GET", "POST"])
 def admin_login():
     if request.method == "POST":
         pwd = request.form.get("password")
         admin_pwd = os.environ.get("ADMIN_PWD", "adminpass")
+
         if pwd == admin_pwd:
             session["is_admin"] = True
             flash("Admin logged in", "success")
@@ -205,49 +215,51 @@ def admin_login():
         else:
             flash("Bad admin password", "danger")
             return redirect(url_for("admin_login"))
-    return render_template("admin-login.html")
 
-# Admin logout
+    # ✅ FIXED TEMPLATE NAME
+    return render_template("admin_login.html")
+
+
 @app.route("/admin-logout")
 def admin_logout():
     session.pop("is_admin", None)
     flash("Admin logged out", "info")
     return redirect(url_for("home"))
 
-# Admin dashboard
+
 @app.route("/admin/dashboard")
 def admin_dashboard():
     if not session.get("is_admin"):
         flash("Admin login required", "warning")
         return redirect(url_for("admin_login"))
-    reports = Report.query.order_by(Report.created_at.desc()).all()
-    reports_json = reports_to_dictlist(reports)
-    return render_template("admin-dashboard.html", reports=reports_json)
 
-# Admin database page: shows login logs and optionally all users & reports
-@app.route("/admin/database", methods=["GET","POST"])
+    reports = Report.query.order_by(Report.created_at.desc()).all()
+    return render_template("admin-dashboard.html", reports=reports_to_dictlist(reports))
+
+
+@app.route("/admin/database")
 def admin_database():
     if not session.get("is_admin"):
         flash("Admin login required", "warning")
         return redirect(url_for("admin_login"))
-    # show login logs, users, reports
+
     logs = LoginLog.query.order_by(LoginLog.timestamp.desc()).limit(500).all()
     users = User.query.order_by(User.created_at.desc()).all()
     reports = Report.query.order_by(Report.created_at.desc()).all()
+
     return render_template("admin-database.html", logs=logs, users=users, reports=reports)
 
-# Simple route to view a report
+
 @app.route("/report/<int:report_id>")
 def view_report(report_id):
     r = Report.query.get_or_404(report_id)
     return render_template("report_view.html", report=r)
 
-# 404
+
 @app.errorhandler(404)
 def not_found(e):
     return render_template("404.html"), 404
 
-# Run
+
 if __name__ == "__main__":
-    # For local testing
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
