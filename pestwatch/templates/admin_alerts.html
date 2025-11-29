@@ -1,16 +1,16 @@
 {% extends "base.html" %}
 {% block content %}
   <h2>Alerts</h2>
-  <table border="1" style="width:100%;">
+  <table>
     <tr><th>ID</th><th>Message</th><th>Lat</th><th>Lon</th><th>Severity</th><th>Date</th></tr>
     {% for a in alerts %}
       <tr>
-        <td>{{a.id}}</td>
-        <td>{{a.message}}</td>
-        <td>{{a.lat}}</td>
-        <td>{{a.lon}}</td>
-        <td>{{a.severity}}</td>
-        <td>{{a.created_at}}</td>
+        <td>{{ a.id }}</td>
+        <td>{{ a.message }}</td>
+        <td>{{ a.lat }}</td>
+        <td>{{ a.lon }}</td>
+        <td>{{ a.severity }}</td>
+        <td>{{ a.created_at }}</td>
       </tr>
     {% endfor %}
   </table>
