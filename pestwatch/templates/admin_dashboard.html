@@ -1,22 +1,26 @@
 {% extends "base.html" %}
 {% block content %}
   <h2>Admin Dashboard</h2>
-  <p><a href="{{ url_for('admin.users') }}">View Farmers</a> | <a href="{{ url_for('admin.alerts') }}">View Alerts</a></p>
+  <p><a href="{{ url_for('admin_users') }}">View Farmers</a> | <a href="{{ url_for('admin_alerts') }}">View Alerts</a> | <a href="{{ url_for('map_view') }}">View Map</a></p>
+
   <h3>Recent Reports</h3>
-  <table border="1" style="width:100%;">
-    <tr><th>ID</th><th>Pest</th><th>Farmer</th><th>Location</th><th>Image</th><th>Date</th></tr>
+  <table>
+    <tr><th>ID</th><th>Pest</th><th>Farmer</th><th>Location</th><th>Photo</th><th>Date</th><th>Actions</th></tr>
     {% for r in reports %}
     <tr>
-      <td>{{r.id}}</td>
-      <td>{{r.pest_name}}</td>
-      <td>{{r.user.username}}</td>
-      <td>{{r.latitude}}, {{r.longitude}}</td>
-      <td>
-        {% if r.image %}
-          <a href="{{ url_for('uploaded_file', filename=r.image) }}" target="_blank">View</a>
-        {% endif %}
-      </td>
+      <td>{{ r.id }}</td>
+      <td>{{ r.pest_name }}</td>
+      <td>{{ r.user.username }}</td>
+      <td>{{ r.latitude }}, {{ r.longitude }}</td>
+      <td>{% if r.image %}<a href="{{ url_for('uploaded_file', filename=r.image) }}" target="_blank">View</a>{% endif %}</td>
       <td>{{ r.created_at }}</td>
+      <td>
+        <a href="{{ url_for('admin_view_report', rid=r.id) }}">View</a> |
+        <a href="{{ url_for('edit_report', rid=r.id) }}">Edit</a> |
+        <form style="display:inline" method="post" action="{{ url_for('delete_report', rid=r.id) }}" onsubmit="return confirm('Delete report?')">
+          <button type="submit">Delete</button>
+        </form>
+      </td>
     </tr>
     {% endfor %}
   </table>
