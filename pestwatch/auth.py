@@ -1,47 +1,67 @@
+import os, time
 from flask import Blueprint, render_template, request, redirect, url_for, flash
-from models import db, User
-from flask_login import login_user, logout_user, login_required
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import login_user, logout_user, current_user, login_required
+from werkzeug.utils import secure_filename
+from models import db, User, Report
+from config import Config
 
-auth_bp = Blueprint("auth", __name__)
+auth = Blueprint("auth", __name__)
 
-@auth_bp.route("/register", methods=["GET", "POST"])
+def save_image(file):
+    if not file or file.filename == "":
+        return None
+    filename = secure_filename(file.filename)
+    new_name = f"{int(time.time())}_{filename}"
+    file.save(os.path.join(Config.UPLOAD_FOLDER, new_name))
+    return new_name
+
+@auth.route("/register", methods=["GET","POST"])
 def register():
     if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
-        if not username or not password:
-            flash("Provide username and password", "danger")
-            return redirect(url_for("auth.register"))
-        if User.query.filter_by(username=username).first():
-            flash("Username already exists", "warning")
-            return redirect(url_for("auth.register"))
-        user = User(username=username, role="farmer")
-        user.set_password(password)
+        user = User(name=request.form["name"],
+                    email=request.form["email"],
+                    password=generate_password_hash(request.form["password"]))
         db.session.add(user)
         db.session.commit()
-        flash("Registered. Please login.", "success")
-        return redirect(url_for("auth.login"))
+        return redirect("/login")
     return render_template("register.html")
 
-
-@auth_bp.route("/login", methods=["GET", "POST"])
+@auth.route("/login", methods=["GET","POST"])
 def login():
     if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
-        user = User.query.filter_by(username=username).first()
-        if not user or not user.check_password(password):
-            flash("Invalid credentials", "danger")
-            return redirect(url_for("auth.login"))
-        login_user(user)
-        flash("Logged in", "success")
-        return redirect(url_for("index"))
+        user = User.query.filter_by(email=request.form["email"]).first()
+        if user and check_password_hash(user.password, request.form["password"]):
+            login_user(user)
+            return redirect("/admin/dashboard" if user.is_admin else "/dashboard")
+        flash("Invalid credentials")
     return render_template("login.html")
 
-
-@auth_bp.route("/logout")
+@auth.route("/dashboard")
 @login_required
+def dashboard():
+    reports = Report.query.filter_by(user_id=current_user.id)
+    return render_template("dashboard.html", reports=reports)
+
+@auth.route("/submit", methods=["POST"])
+@login_required
+def submit():
+    img = save_image(request.files.get("image"))
+
+    report = Report(
+        pest_name=request.form["pest"],
+        description=request.form["description"],
+        location=request.form["location"],
+        latitude=request.form.get("latitude"),
+        longitude=request.form.get("longitude"),
+        image=img,
+        user_id=current_user.id
+    )
+    db.session.add(report)
+    db.session.commit()
+    return redirect("/dashboard")
+
+@auth.route("/logout")
 def logout():
     logout_user()
-    flash("Logged out", "info")
-    return redirect(url_for("index"))
+    return redirect("/login")
