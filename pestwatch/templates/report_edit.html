@@ -1,22 +1,14 @@
 {% extends "base.html" %}
 {% block content %}
+<div class="card">
   <h2>Edit Report #{{ r.id }}</h2>
   <form method="post" enctype="multipart/form-data">
-    <label>Pest name<br><input name="pest" value="{{ r.pest_name }}" required></label><br>
-    <label>Description<br><textarea name="desc">{{ r.description }}</textarea></label><br>
-    <label>Latitude<br><input id="lat" name="lat" value="{{ r.latitude }}"></label><br>
-    <label>Longitude<br><input id="lon" name="lon" value="{{ r.longitude }}"></label><br>
-    <button type="button" onclick="getLocation()">Use My Location</button><br><br>
-    <label>Replace Photo (optional)<br><input type="file" name="image" accept="image/*"></label><br><br>
+    <label>Pest<br><input name="pest" value="{{ r.pest_name }}" required></label><br>
+    <label>Description<br><textarea name="description">{{ r.description }}</textarea></label><br>
+    <label>Latitude<br><input name="latitude" value="{{ r.latitude }}"></label><br>
+    <label>Longitude<br><input name="longitude" value="{{ r.longitude }}"></label><br>
+    <label>Replace photo<br><input type="file" name="image"></label><br>
     <button type="submit">Save</button>
   </form>
-<script>
-function getLocation() {
-  if (!navigator.geolocation) { alert("Geolocation not supported"); return; }
-  navigator.geolocation.getCurrentPosition(function(position) {
-    document.getElementById("lat").value = position.coords.latitude;
-    document.getElementById("lon").value = position.coords.longitude;
-  }, function(err){ alert("Could not get location: " + err.message); }, { enableHighAccuracy: true });
-}
-</script>
+</div>
 {% endblock %}
