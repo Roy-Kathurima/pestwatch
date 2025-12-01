@@ -1,36 +1,29 @@
-from flask import Blueprint, render_template, redirect, url_for, flash
+from flask import Blueprint, render_template
 from flask_login import login_required, current_user
-from models import User, Report, Alert
-from models import db
+from models import User, Report
 
-admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
+admin = Blueprint("admin", __name__, url_prefix="/admin")
 
-def admin_required():
-    return current_user.is_authenticated and current_user.role == "admin"
+def admin_only():
+    if not current_user.is_admin:
+        return False
+    return True
 
-@admin_bp.route("/")
+@admin.route("/dashboard")
 @login_required
 def dashboard():
-    if not admin_required():
-        flash("Access denied", "danger")
-        return redirect(url_for("index"))
-    reports = Report.query.order_by(Report.created_at.desc()).all()
+    if not admin_only(): return "403 Forbidden", 403
+    reports = Report.query.all()
     return render_template("admin_dashboard.html", reports=reports)
 
-@admin_bp.route("/users")
+@admin.route("/users")
 @login_required
 def users():
-    if not admin_required():
-        flash("Access denied", "danger")
-        return redirect(url_for("index"))
-    farmers = User.query.filter_by(role="farmer").order_by(User.created_at.desc()).all()
-    return render_template("admin_users.html", users=farmers)
+    if not admin_only(): return "403 Forbidden", 403
+    return render_template("admin_users.html", users=User.query.all())
 
-@admin_bp.route("/alerts")
+@admin.route("/view/<int:id>")
 @login_required
-def alerts():
-    if not admin_required():
-        flash("Access denied", "danger")
-        return redirect(url_for("index"))
-    alerts = Alert.query.order_by(Alert.created_at.desc()).all()
-    return render_template("admin_alerts.html", alerts=alerts)
+def view(id):
+    if not admin_only(): return "403 Forbidden", 403
+    return render_template("admin_view_report.html", report=Report.query.get_or_404(id))
