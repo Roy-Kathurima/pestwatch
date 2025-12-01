@@ -1,4 +1,6 @@
 import os
+import time
+from flask import send_from_directory
 from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory, jsonify, abort
 from config import Config
 from models import db, User, Report, Alert
@@ -314,9 +316,15 @@ def forbidden(e):
 @app.errorhandler(404)
 def notfound(e):
     return render_template("404.html"), 404
+    @app.route("/uploads/<path:filename>")
+def uploaded_file(filename):
+    # serve from the uploads folder we've created
+    return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
+
 
 # run
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
