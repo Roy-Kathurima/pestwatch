@@ -1,9 +1,12 @@
 {% extends "base.html" %}
 {% block content %}
+<div class="card">
   <h2>Your Dashboard</h2>
-  <p>Welcome, {{ current_user.username }} — submit reports and track your history below.</p>
-  <p><a href="{{ url_for('new_report') }}">Submit new report</a></p>
+  <p>Welcome, {{ current_user.username }}</p>
+  <p><a href="{{ url_for('auth.report') }}">Submit new report</a></p>
+</div>
 
+<div class="card">
   <h3>Your Reports</h3>
   {% if reports %}
     <table>
@@ -12,12 +15,16 @@
       <tr>
         <td>{{ r.id }}</td>
         <td>{{ r.pest_name }}</td>
-        <td>{{ r.latitude }}, {{ r.longitude }}</td>
-        <td>{% if r.image %}<a href="{{ url_for('uploaded_file', filename=r.image) }}" target="_blank">View</a>{% endif %}</td>
+        <td>{{ "%.6f"|format(r.latitude) }}, {{ "%.6f"|format(r.longitude) }}</td>
+        <td>
+          {% if r.image %}
+            <a href="{{ url_for('uploaded_file', filename=r.image) }}" target="_blank">View</a>
+          {% else %} - {% endif %}
+        </td>
         <td>{{ r.created_at }}</td>
         <td>
-          <a href="{{ url_for('edit_report', rid=r.id) }}">Edit</a> |
-          <form style="display:inline" method="post" action="{{ url_for('delete_report', rid=r.id) }}" onsubmit="return confirm('Delete report?')">
+          <a href="{{ url_for('auth.report_edit', rid=r.id) }}">Edit</a>
+          <form action="{{ url_for('auth.report_delete', rid=r.id) }}" method="post" style="display:inline" onsubmit="return confirm('Delete?')">
             <button type="submit">Delete</button>
           </form>
         </td>
@@ -27,5 +34,5 @@
   {% else %}
     <p>No reports yet.</p>
   {% endif %}
+</div>
 {% endblock %}
-
