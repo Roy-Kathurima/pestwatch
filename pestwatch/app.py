@@ -45,13 +45,22 @@ def register():
 def login_page():
     if request.method == "POST":
         u = User.query.filter_by(username=request.form["username"]).first()
+
         if u and u.check_password(request.form["password"]):
             login_user(u)
             log(u.username, True)
-            return redirect("/")
+
+            # Auto redirect
+            if u.is_admin:
+                return redirect("/admin")
+            else:
+                return redirect("/dashboard")
+
         log(request.form["username"], False)
-        flash("Invalid")
+        flash("Invalid login")
+
     return render_template("login.html")
+
 
 @app.route("/logout")
 @login_required
@@ -126,9 +135,16 @@ def make_admin():
         db.session.commit()
         return "ADMIN CREATED"
     return "USER NOT FOUND"
+
+@app.route("/dashboard")
+@login_required
+def dashboard():
+    return render_template("dashboard.html")
+
     
 with app.app_context():
     db.create_all()
+
 
 
 
