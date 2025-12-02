@@ -1,0 +1,18 @@
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<h2>Approved Reports</h2>
+
+<div id="map" style="height:400px"></div>
+
+{% for r in reports %}
+<p>{{r.title}} ({{r.lat}}, {{r.lng}})</p>
+{% endfor %}
+
+<script>
+var map = L.map('map').setView([-1.28,36.82], 6);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+{% for r in reports %}
+L.marker([{{r.lat}},{{r.lng}}]).addTo(map)
+{% endfor %}
+</script>

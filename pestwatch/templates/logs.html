@@ -1,0 +1,14 @@
+<h2>Login Logs</h2>
+
+<table border="1">
+<tr><th>User</th><th>IP</th><th>Time</th><th>Success</th></tr>
+
+{% for l in logs %}
+<tr>
+<td>{{l.username}}</td>
+<td>{{l.ip}}</td>
+<td>{{l.time}}</td>
+<td>{{l.success}}</td>
+</tr>
+{% endfor %}
+</table>
