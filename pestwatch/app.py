@@ -23,10 +23,9 @@ def log(name, ok):
                  agent=request.headers.get("User-Agent"), success=ok)
     db.session.add(l)
     db.session.commit()
-
-@app.before_first_request
-def init_db():
+with app.app_context():
     db.create_all()
+
 
 @app.route("/")
 def home():
@@ -118,3 +117,4 @@ def logs():
 @app.route("/uploads/<file>")
 def img(file):
     return send_from_directory("uploads", file)
+
