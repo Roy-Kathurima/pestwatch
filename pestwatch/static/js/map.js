@@ -1,8 +1,10 @@
-// map.js — displays approved reports on the public map (index.html)
-var map = L.map('map').setView([-1.286389, 36.817223], 6);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '&copy; OpenStreetMap contributors'
-}).addTo(map);
+function loadMap(reports) {
+  var map = L.map("map").setView([-1.28, 36.82], 6);
 
-// Markers inserted from index.html template using server-side templating
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+
+  reports.forEach(r => {
+    L.marker([r.lat, r.lng]).addTo(map)
+      .bindPopup(r.title);
+  });
+}
