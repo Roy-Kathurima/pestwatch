@@ -1,0 +1,40 @@
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<form method="post" enctype="multipart/form-data">
+
+Title<input name="title"><br>
+Details<textarea name="details"></textarea><br>
+Photo<input type="file" name="image"><br>
+
+<button type="button" onclick="locate()">Use Device Location</button><br>
+
+Lat<input id="lat" name="lat">
+Lng<input id="lng" name="lng"><br>
+
+<div id="map" style="height:300px"></div>
+
+<button>Submit</button>
+</form>
+
+<script>
+var map = L.map('map').setView([-1.28,36.82], 6);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+var marker;
+
+function locate(){
+navigator.geolocation.getCurrentPosition(p=>{
+if(marker) marker.setLatLng([p.coords.latitude,p.coords.longitude])
+else marker = L.marker([p.coords.latitude,p.coords.longitude]).addTo(map)
+document.getElementById("lat").value = p.coords.latitude
+document.getElementById("lng").value = p.coords.longitude
+})
+}
+
+map.on("click", e=>{
+if(marker) marker.setLatLng(e.latlng)
+else marker=L.marker(e.latlng).addTo(map)
+document.getElementById("lat").value=e.latlng.lat
+document.getElementById("lng").value=e.latlng.lng
+})
+</script>
