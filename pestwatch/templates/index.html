@@ -1,3 +1,4 @@
+{% include "navbar.html" %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
@@ -16,3 +17,4 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 L.marker([{{r.lat}},{{r.lng}}]).addTo(map)
 {% endfor %}
 </script>
+
