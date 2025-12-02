@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>PestWatch - Home</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+</head>
+<body>
+  <div class="container">
+    {% include 'navbar.html' %}
+
+    <h1>PestWatch</h1>
+    <p class="small">Public view: approved pest reports</p>
+
+    <div style="margin:10px 0;">
+      <a class="btn" href="{{ url_for('login') }}">Login</a>
+      <a class="btn" href="{{ url_for('register') }}">Register</a>
+    </div>
+
+    <h3>Approved Reports</h3>
+    <div id="map" style="height:420px;"></div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="{{ url_for('static', filename='js/map.js') }}"></script>
+
+    <script>
+      // add markers from server-side list `reports`
+      {% for r in reports %}
+        {% if r.lat is not none and r.lng is not none %}
+          L.marker([{{ r.lat }}, {{ r.lng }}]).addTo(map)
+            .bindPopup("<strong>{{ r.title|escape }}</strong><br>{{ r.created_at.strftime('%Y-%m-%d') }}");
+        {% endif %}
+      {% endfor %}
+    </script>
+
+  </div>
+</body>
+</html>

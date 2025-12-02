@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Admin - PestWatch</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+  <div class="container">
+    {% include 'navbar.html' %}
+    <h2>Admin Dashboard</h2>
+
+    <p class="small">Approve reported posts, export CSV and view logs.</p>
+
+    <table>
+      <thead><tr><th>ID</th><th>User</th><th>Title</th><th>When</th><th>Location</th><th>Approved</th><th>Action</th></tr></thead>
+      <tbody>
+      {% for r in reports %}
+        <tr>
+          <td>{{ r.id }}</td>
+          <td>{{ r.user.username if r.user else '—' }}</td>
+          <td>{{ r.title }}</td>
+          <td>{{ r.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+          <td>{% if r.lat and r.lng %}{{ r.lat }}, {{ r.lng }}{% else %}—{% endif %}</td>
+          <td>{{ 'Yes' if r.approved else 'No' }}</td>
+          <td>
+            {% if not r.approved %}
+              <form action="{{ url_for('admin_approve', report_id=r.id) }}" method="post" style="display:inline">
+                <button class="btn" type="submit">Approve</button>
+              </form>
+            {% else %}
+              —
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+
+    <div style="margin-top:12px;">
+      <a class="btn" href="{{ url_for('admin_export') }}">Export CSV</a>
+      <a class="btn" href="{{ url_for('admin_logins') }}">View Login Logs</a>
+    </div>
+  </div>
+</body>
+</html>
