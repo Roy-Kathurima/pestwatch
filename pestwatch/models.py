@@ -1,13 +1,16 @@
+from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
-from app import db, login_manager
+
+db = SQLAlchemy()
 
 # --------------------
 # USER MODEL
 # --------------------
 class User(UserMixin, db.Model):
     __tablename__ = "users"
+
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
@@ -21,17 +24,12 @@ class User(UserMixin, db.Model):
     def check_password(self, pwd):
         return check_password_hash(self.password, pwd)
 
-
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
-
-
 # --------------------
 # REPORT MODEL
 # --------------------
 class Report(db.Model):
     __tablename__ = "reports"
+
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(150))
     details = db.Column(db.Text)
@@ -42,12 +40,12 @@ class Report(db.Model):
 
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
 
-
 # --------------------
 # LOGIN LOG MODEL
 # --------------------
 class LoginLog(db.Model):
     __tablename__ = "logins"
+
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(120))
     time = db.Column(db.DateTime, default=datetime.utcnow)
