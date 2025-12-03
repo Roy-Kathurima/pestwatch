@@ -4,18 +4,20 @@
   <div class="logo">🐛 PestWatch Kenya</div>
 
   <div class="links">
-  <a href="/">Home</a>
-
-  {% if current_user.is_authenticated %}
-     <a href="/dashboard">Dashboard</a>
-     <a href="/logout">Logout</a>
-  {% else %}
-     <a href="/login">Login</a>
-     <a href="/register">Register</a>
-  {% endif %}
-
-  {% if current_user.is_authenticated and current_user.is_admin %}
-     <a href="/admin" class="admin">Admin</a>
-  {% endif %}
+    <a href="/">Home</a>
+    {% if current_user.is_authenticated %}
+      <a href="/dashboard">Dashboard</a>
+      <a href="/profile">Profile</a>
+      <a href="/my-reports">My Reports</a>
+      <a href="/report">Submit</a>
+      <a href="/logout">Logout ({{ current_user.username }})</a>
+      {% if current_user.is_admin %}
+        <a href="/admin" class="admin">Admin</a>
+      {% endif %}
+    {% else %}
+      <a href="/login">Login</a>
+      <a href="/register">Register</a>
+    {% endif %}
   </div>
 </nav>
+<hr>
