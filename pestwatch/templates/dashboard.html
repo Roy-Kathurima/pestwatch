@@ -1,29 +1,46 @@
 {% include "navbar.html" %}
 
-<div class="container">
+<div class="container" style="margin-top:18px;">
+  <div class="left">
+    <div class="card">
+      <h2>My Reports</h2>
+      <a class="btn-primary" href="{{ url_for('report') }}">➕ Submit New Report</a>
+    </div>
 
-  <div class="admin-box">
-    <!-- admin access via secret -->
-    <p>If you are an admin or have the secret code, <a href="{{ url_for('admin_unlock') }}">unlock admin panel</a>.</p>
+    {% if reports %}
+      {% for r in reports %}
+        <div class="card">
+          <h3>{{ r.title or '(no title)' }}</h3>
+          <div class="small">{{ r.created_at.strftime('%Y-%m-%d %H:%M') }} • Approved: {{ 'Yes' if r.approved else 'No' }}</div>
+          <p>{{ r.details }}</p>
+          {% if r.image_filename %}
+            <img src="{{ url_for('uploaded_file', filename=r.image_filename) }}" class="report-image">
+          {% endif %}
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="card"><p>No reports yet.</p></div>
+    {% endif %}
   </div>
 
-  <h2>My Pest Reports</h2>
+  <div class="right">
+    <div class="card">
+      <h3>Quick Actions</h3>
+      <p><a href="{{ url_for('profile') }}">Edit profile</a></p>
+      {% if current_user.is_admin %}
+        <p><a href="{{ url_for('admin') }}">Admin panel</a></p>
+      {% else %}
+        <p><a href="{{ url_for('admin_unlock') }}">Unlock admin (have a code?)</a></p>
+      {% endif %}
+    </div>
 
-  {% if reports %}
-    {% for r in reports %}
-      <div class="card">
-        <h4>{{ r.title or '(no title)' }}</h4>
-        <div class="card-meta">{{ r.created_at.strftime('%Y-%m-%d %H:%M') }} • Approved: {{ 'Yes' if r.approved else 'No' }}</div>
-        <p>{{ r.details }}</p>
-        {% if r.image_filename %}
-          <img src="{{ url_for('uploaded_file', filename=r.image_filename) }}" class="report-image">
-        {% endif %}
+    <div class="card">
+      <h3>Profile</h3>
+      <div class="small">
+        {{ current_user.username }}<br>
+        {{ current_user.full_name or '' }}<br>
+        {{ current_user.email or '' }}<br>
       </div>
-    {% endfor %}
-  {% else %}
-    <p>You have not submitted any reports yet.</p>
-  {% endif %}
-
-  <a class="btn-primary" href="{{ url_for('report') }}">➕ Submit New Report</a>
-
+    </div>
+  </div>
 </div>
