@@ -1,20 +1,39 @@
 {% include "navbar.html" %}
+<div class="container" style="margin-top:18px;">
+  <div class="left">
+    <div class="card">
+      <h2>Register</h2>
+      <form method="post">
+        <label>Username</label>
+        <input name="username" required>
+        <label>Password</label>
+        <input type="password" name="password" required>
 
-<div class="container">
-  <form method="post">
-    <h2>Create Account</h2>
-    <input name="username" placeholder="Username" required>
-    <input type="password" name="password" placeholder="Password" required>
+        <label>Security question</label>
+        <select name="question">
+          <option value="pet">What was your first pet's name?</option>
+          <option value="school">Name of your first school?</option>
+          <option value="birthplace">Where were you born?</option>
+        </select>
 
-    <label>Security question</label>
-    <select name="question">
-      <option value="pet">What was your first pet's name?</option>
-      <option value="school">Name of your first school?</option>
-      <option value="birthplace">Where were you born?</option>
-    </select>
+        <label>Answer</label>
+        <input name="answer" required>
 
-    <input name="answer" placeholder="Security answer" required>
+        <div style="margin-top:12px;">
+          <button class="btn-primary" type="submit">Create account</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
-    <button class="btn-primary" type="submit">Create Account</button>
-  </form>
+  <div class="right">
+    <div class="card">
+      <h3>Why register?</h3>
+      <ul class="small">
+        <li>Submit reports with photos & location</li>
+        <li>Track approval status</li>
+        <li>Get notified (if configured)</li>
+      </ul>
+    </div>
+  </div>
 </div>
