@@ -1,63 +1,80 @@
-{% include "navbar.html" %}
-<div class="container">
-  <div class="grid">
-    <div class="left">
-      <div class="card">
-        <h2>Admin — Reports</h2>
-        <table>
-          <thead><tr><th>ID</th><th>User</th><th>Title</th><th>When</th><th>Approved</th><th>Action</th></tr></thead>
-          <tbody>
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Admin Panel</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+</head>
+<body>
+  {% include "navbar.html" %}
+  <div class="container">
+    <div class="grid">
+      <div>
+        <div class="card">
+          <h2>All reports</h2>
+          <table class="table">
+            <thead><tr><th>ID</th><th>User</th><th>Title</th><th>When</th><th>Approved</th><th>Action</th></tr></thead>
+            <tbody>
             {% for r in reports %}
-            <tr>
-              <td>{{ r.id }}</td>
-              <td>{{ r.user_id or '—' }}</td>
-              <td>{{ r.title }}</td>
-              <td>{{ r.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
-              <td>{{ 'Yes' if r.approved else 'No' }}</td>
-              <td>
-                {% if not r.approved %}
-                  <form method="post" action="{{ url_for('admin_approve', report_id=r.id) }}">
-                    <button class="btn-primary" type="submit">Approve</button>
-                  </form>
-                {% else %}
-                  —
-                {% endif %}
-              </td>
-            </tr>
+              <tr>
+                <td>{{ r.id }}</td>
+                <td>{{ r.user_id or '—' }}</td>
+                <td>{{ r.title }}</td>
+                <td>{{ r.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td>{{ 'Yes' if r.approved else 'No' }}</td>
+                <td>
+                  {% if not r.approved %}
+                    <form method="post" action="{{ url_for('admin_approve', id=r.id) }}">
+                      <button class="btn btn-primary" type="submit">Approve</button>
+                    </form>
+                  {% else %}
+                    —
+                  {% endif %}
+                </td>
+              </tr>
             {% endfor %}
-          </tbody>
-        </table>
-        <div style="margin-top:8px;"><a class="btn-secondary" href="{{ url_for('admin_export') }}">Export CSV</a> <a class="btn-secondary" href="{{ url_for('admin_logins') }}">Login logs</a></div>
-      </div>
-    </div>
-
-    <div class="right">
-      <div class="card">
-        <h3>Reports map</h3>
-        <div id="map" style="height:320px;"></div>
+            </tbody>
+          </table>
+          <div style="margin-top:10px;">
+            <a class="btn btn-ghost" href="{{ url_for('admin_export') }}">Export CSV</a>
+            <a class="btn btn-ghost" href="{{ url_for('admin_logins') }}" style="margin-left:8px;">View login logs</a>
+          </div>
+        </div>
       </div>
 
-      <div class="card">
-        <h3>Stats</h3>
-        <canvas id="statusChart" height="140"></canvas>
-        <canvas id="lineChart" height="140" style="margin-top:12px;"></canvas>
+      <div>
+        <div class="card">
+          <h3>Map</h3>
+          <div id="admin-map" class="map-box"></div>
+        </div>
+        <div class="card" style="margin-top:12px;">
+          <h3>Stats</h3>
+          <canvas id="statusChart" height="140"></canvas>
+          <canvas id="lineChart" height="140" style="margin-top:12px;"></canvas>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="{{ url_for('static', filename='js/map.js') }}"></script>
-<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
-<script>
-  const reports = {{ reports|tojson }};
-  loadMap(reports);
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const adminReports = [
+      {% for r in reports %}
+        { title: "{{ r.title|e }}", details: "{{ (r.details or '')|e }}", lat: {{ r.lat or 'null' }}, lng: {{ r.lng or 'null' }}, image: "{{ r.image_filename or '' }}" },
+      {% endfor %}
+    ];
+  </script>
+  <script src="{{ url_for('static', filename='js/map.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+  <script>
+    renderMap('admin-map', adminReports);
 
-  fetch('{{ url_for("admin_stats") }}')
-    .then(r=>r.json())
-    .then(data=>{
-      renderStatusChart('statusChart', data.approved, data.pending);
-      renderLineChart('lineChart', data.days, data.counts);
-    });
-</script>
+    fetch("{{ url_for('admin_stats') }}")
+      .then(r => r.json())
+      .then(d => {
+        renderDoughnut('statusChart', d.approved, d.pending);
+        renderLine('lineChart', d.days, d.counts);
+      });
+  </script>
+</body>
+</html>
