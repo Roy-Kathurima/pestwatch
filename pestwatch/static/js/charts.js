@@ -1,17 +1,15 @@
-function renderStatusChart(canvasId, approved, pending) {
+function renderDoughnut(canvasId, a, b) {
   if (!document.getElementById(canvasId)) return;
   new Chart(document.getElementById(canvasId), {
     type: 'doughnut',
-    data: {
-      labels: ['Approved','Pending'],
-      datasets: [{ data: [approved, pending], backgroundColor:['#2e8b57','#ff9f43'] }]
-    }
+    data: { labels: ['Approved','Pending'], datasets: [{ data: [a,b], backgroundColor: ['#167f74','#ff9f43'] }] }
   });
 }
-function renderLineChart(canvasId, labels, values) {
+
+function renderLine(canvasId, labels, values) {
   if (!document.getElementById(canvasId)) return;
   new Chart(document.getElementById(canvasId), {
     type: 'line',
-    data: { labels: labels, datasets: [{ label:'Reports', data: values, fill:true, backgroundColor:'rgba(46,139,87,0.12)', borderColor:'#2e8b57', tension:0.2 }] }
+    data: { labels: labels, datasets: [{ label: 'Reports', data: values, fill: true, backgroundColor: 'rgba(22,127,116,0.12)', borderColor: '#167f74' }] }
   });
 }
