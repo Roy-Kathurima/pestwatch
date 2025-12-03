@@ -1,10 +1,9 @@
 {% include "navbar.html" %}
-
-<div class="container" style="margin-top:18px;">
+<div class="container">
   <div class="card">
     <h2>Login Logs</h2>
     <table>
-      <thead><tr><th>ID</th><th>User</th><th>Success</th><th>IP</th><th>When</th></tr></thead>
+      <thead><tr><th>ID</th><th>Username</th><th>Success</th><th>IP</th><th>When</th></tr></thead>
       <tbody>
         {% for l in logs %}
         <tr>
