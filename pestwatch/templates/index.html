@@ -1,31 +1,30 @@
 {% include "navbar.html" %}
-
-<section class="hero">
-  <div class="text">
-    <h1>PestWatch Kenya</h1>
-    <p>Report pest incidents from your farm and help the community respond quickly. Submit photos, attach location and track approvals.</p>
-
-    <div class="hero-actions">
-      <a href="{{ url_for('login') }}" class="btn-primary">Login</a>
-      <a href="{{ url_for('register') }}" class="btn-secondary">Register</a>
-    </div>
-
-    <div class="admin-quick">
-      <a href="{{ url_for('admin_unlock') }}" class="admin-link">Admin? Unlock here</a>
+<div class="container">
+  <div class="hero">
+    <div class="text">
+      <h1>PestWatch Kenya</h1>
+      <p>Report pest incidents on your farm — submit photos, attach location and track approvals.</p>
+      <div class="hero-actions">
+        <a href="{{ url_for('login') }}" class="btn-primary">Login</a>
+        <a href="{{ url_for('register') }}" class="btn-secondary">Register</a>
+      </div>
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('admin_unlock') }}" class="admin-link small">Admin? Unlock here</a>
+      </div>
     </div>
   </div>
-</section>
 
-<section class="map-section">
-  <h2 style="max-width:1100px; margin:0 auto 12px auto;">Live approved reports</h2>
-  <div class="map-box" style="max-width:1100px; margin:0 auto;">
-    <div id="map"></div>
-  </div>
-</section>
+  <section style="margin-top:18px;">
+    <h2>Latest approved reports</h2>
+    <div class="map-box card">
+      <div id="map"></div>
+    </div>
+  </section>
+</div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="{{ url_for('static', filename='js/map.js') }}"></script>
 <script>
-  const reports = {{ reports|tojson }};
-  loadMap(reports);
+  const reports = {{ (Report.query.filter_by(approved=True).order_by(Report.created_at.desc()).limit(100).all())|tojson }};
+  // the Report query above is evaluated when template renders by Flask; we used tojson to pass data
 </script>
+<script src="{{ url_for('static', filename='js/map.js') }}"></script>
