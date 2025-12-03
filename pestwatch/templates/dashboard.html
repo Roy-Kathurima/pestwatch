@@ -1,41 +1,68 @@
-{% include "navbar.html" %}
-<div class="container">
-  <div class="grid">
-    <div class="left">
-      <div class="card">
-        <h2>My Reports</h2>
-        <a class="btn-primary" href="{{ url_for('report') }}">➕ Submit New Report</a>
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Dashboard</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+</head>
+<body>
+  {% include "navbar.html" %}
+  <div class="container">
+    <div class="grid">
+      <div>
+        <div class="card">
+          <h2>Approved reports</h2>
+          {% for r in approved %}
+            <div class="card">
+              <strong>{{ r.title }}</strong>
+              <div class="small">{{ r.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+              <p>{{ r.details[:200] }}{% if r.details and r.details|length > 200 %}...{% endif %}</p>
+              {% if r.image_filename %}
+                <img src="{{ url_for('uploads', filename=r.image_filename) }}" class="report-image">
+              {% endif %}
+            </div>
+          {% else %}
+            <div class="card">No approved reports</div>
+          {% endfor %}
+        </div>
+
+        <div class="card" style="margin-top:12px;">
+          <h2>Your reports</h2>
+          {% for r in my_reports %}
+            <div class="card">
+              <strong>{{ r.title }}</strong>
+              <div class="small">{{ r.created_at.strftime('%Y-%m-%d %H:%M') }} • Approved: {{ 'Yes' if r.approved else 'No' }}</div>
+              <p>{{ r.details[:150] }}</p>
+            </div>
+          {% else %}
+            <div class="card">You have not submitted any reports yet.</div>
+          {% endfor %}
+        </div>
       </div>
 
-      {% if reports %}
-        {% for r in reports %}
-          <div class="card">
-            <h3>{{ r.title or '(no title)' }}</h3>
-            <div class="small">{{ r.created_at.strftime('%Y-%m-%d %H:%M') }} • Approved: {{ 'Yes' if r.approved else 'No' }}</div>
-            <p>{{ r.details }}</p>
-            {% if r.image_filename %}
-              <img src="{{ url_for('uploaded_file', filename=r.image_filename) }}" class="report-image">
-            {% endif %}
-          </div>
-        {% endfor %}
-      {% else %}
-        <div class="card">You have not submitted reports yet.</div>
-      {% endif %}
-    </div>
+      <div>
+        <div class="card">
+          <h3>Quick actions</h3>
+          <a class="btn btn-primary" href="{{ url_for('report') }}">Submit new report</a>
+          <a class="btn btn-ghost" href="{{ url_for('my_reports') }}" style="margin-left:8px;">My reports</a>
+        </div>
 
-    <div class="right">
-      <div class="card">
-        <h3>Quick Actions</h3>
-        <p><a href="{{ url_for('profile') }}">Edit profile</a></p>
-        <p><a href="{{ url_for('my_reports') }}">View my reports</a></p>
-        <p><a href="{{ url_for('admin_unlock') }}">Unlock admin (code)</a></p>
-      </div>
-      <div class="card">
-        <h3>Profile</h3>
-        {% if current_user %}
-        <p class="small">{{ current_user.username }}<br>{{ current_user.full_name or '' }}<br>{{ current_user.email or '' }}</p>
-        {% endif %}
+        <div class="card" style="margin-top:12px;">
+          <h3>Map</h3>
+          <div id="dash-map" class="map-box"></div>
+        </div>
       </div>
     </div>
   </div>
-</div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    const dashReports = [
+      {% for r in approved %}
+        { title: "{{ r.title|e }}", details: "{{ (r.details or '')|e }}", lat: {{ r.lat or 'null' }}, lng: {{ r.lng or 'null' }}, image: "{{ r.image_filename or '' }}" },
+      {% endfor %}
+    ];
+  </script>
+  <script src="{{ url_for('static', filename='js/map.js') }}"></script>
+  <script>renderMap('dash-map', dashReports);</script>
+</body>
+</html>
