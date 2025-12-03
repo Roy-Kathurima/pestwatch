@@ -1,20 +1,15 @@
 {% include "navbar.html" %}
-<div class="container" style="margin-top:18px;">
-  <div class="left">
-    <h2>My Reports</h2>
-    {% if reports %}
-      {% for r in reports %}
-      <div class="card">
-        <h3>{{ r.title }}</h3>
-        <div class="small">{{ r.created_at.strftime('%Y-%m-%d %H:%M') }} • Approved: {{ 'Yes' if r.approved else 'No' }}</div>
+<div class="container">
+  <div class="card">
+    <h2>All Reports</h2>
+    {% for r in reports %}
+      <div class="card" style="margin-bottom:8px;">
+        <strong>{{ r.title }}</strong><br>
+        <span class="small">{{ r.created_at.strftime('%Y-%m-%d %H:%M') }} • Approved: {{ 'Yes' if r.approved else 'No' }}</span>
         <p>{{ r.details }}</p>
-        {% if r.image_filename %}
-          <img src="{{ url_for('uploaded_file', filename=r.image_filename) }}" class="report-image">
-        {% endif %}
       </div>
-      {% endfor %}
     {% else %}
-      <div class="card">No reports yet.</div>
-    {% endif %}
+      <p>No reports yet.</p>
+    {% endfor %}
   </div>
 </div>
