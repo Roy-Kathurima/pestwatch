@@ -1,7 +1,48 @@
 {% include "navbar.html" %}
-<h2>Pending Reports</h2>
 
-{% for r in reports %}
-{{r.title}} 
-<a href="/approve/{{r.id}}">Approve</a><br>
-{% endfor %}
+<div class="container admin-grid">
+  <div class="admin-left">
+    <h2>Reports</h2>
+
+    <table>
+      <thead><tr><th>ID</th><th>User</th><th>Title</th><th>When</th><th>Approved</th><th>Action</th></tr></thead>
+      <tbody>
+      {% for r in reports %}
+        <tr>
+          <td>{{ r.id }}</td>
+          <td>{{ r.user.username if r.user else '—' }}</td>
+          <td>{{ r.title }}</td>
+          <td>{{ r.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+          <td>{{ 'Yes' if r.approved else 'No' }}</td>
+          <td>
+            {% if not r.approved %}
+              <form method="post" action="{{ url_for('approve', report_id=r.id) }}">
+                <button class="btn-primary" type="submit">Approve & Notify</button>
+              </form>
+            {% else %}
+              —
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="admin-right">
+    <h3>Charts</h3>
+    <canvas id="statusChart" height="200"></canvas>
+    <h3 style="margin-top:18px">Reports (last 14 days)</h3>
+    <canvas id="lineChart" height="200"></canvas>
+    <p style="margin-top:12px"><a class="btn" href="{{ url_for('admin_export') }}">Export CSV</a></p>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/static/js/charts.js"></script>
+<script>
+  fetch('/admin/stats').then(r=>r.json()).then(data=>{
+    renderStatusChart('statusChart', data.approved, data.pending);
+    renderLineChart('lineChart', data.days, data.counts);
+  });
+</script>
