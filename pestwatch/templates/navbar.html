@@ -1,7 +1,17 @@
-<nav style="background:#2c7be5;padding:10px;text-align:center;">
-  <a href="/dashboard" style="color:white;margin:10px;">Home</a>
-  <a href="/report" style="color:white;margin:10px;">Report Pest</a>
-  <a href="/reports" style="color:white;margin:10px;">All Reports</a>
-  <a href="/admin-unlock" style="color:white;margin:10px;">Admin</a>
-  <a href="/logout" style="color:white;margin:10px;">Logout</a>
+<nav class="nav">
+  <div class="brand">🐛 PestWatch</div>
+  <div class="links">
+    <a href="{{ url_for('index') }}" class="small">Home</a>
+    {% if current_user %}
+      <a href="{{ url_for('dashboard') }}" class="small">Dashboard</a>
+      <a href="{{ url_for('report') }}" class="small">Report</a>
+      <a href="{{ url_for('my_reports') }}" class="small">My Reports</a>
+      <a href="{{ url_for('profile') }}" class="small">Profile</a>
+      <a href="{{ url_for('logout') }}" class="small">Logout</a>
+    {% else %}
+      <a href="{{ url_for('login') }}" class="small">Login</a>
+      <a href="{{ url_for('register') }}" class="small">Register</a>
+    {% endif %}
+    <a href="{{ url_for('admin_unlock') }}" class="small">Admin</a>
+  </div>
 </nav>
