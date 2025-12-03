@@ -18,15 +18,18 @@ app.config.from_object(Config)
 # ensure upload folder exists
 os.makedirs(app.config.get("UPLOAD_FOLDER", "uploads"), exist_ok=True)
 
-# initialize DB (models.db is defined in models.py)
+# init db
 db.init_app(app)
 
-# Login manager
 login_manager = LoginManager()
 login_manager.login_view = "login"
 login_manager.init_app(app)
 
 logger = logging.getLogger(__name__)
+
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
+def allowed_file(fn):
+    return "." in fn and fn.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -35,20 +38,21 @@ def load_user(user_id):
     except Exception:
         return None
 
-ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
-def allowed_file(fn):
-    return "." in fn and fn.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
-
 def log_login_attempt(username: str, user_obj, success: bool):
     ip = request.remote_addr or "unknown"
     ua = request.headers.get("User-Agent", "")
-    log = LoginLog(user_id=(user_obj.id if user_obj else None),
-                   username=username, ip_address=ip, user_agent=ua,
-                   timestamp=datetime.utcnow(), success=success)
+    log = LoginLog(
+        user_id=(user_obj.id if user_obj else None),
+        username=username,
+        ip_address=ip,
+        user_agent=ua,
+        timestamp=datetime.utcnow(),
+        success=success
+    )
     db.session.add(log)
     db.session.commit()
 
-# create tables on startup
+# create tables if not present
 with app.app_context():
     db.create_all()
 
@@ -56,21 +60,22 @@ with app.app_context():
 
 @app.route("/")
 def index():
-    # public page — show approved reports on homepage
+    # show hero + approved reports summary
     reports = Report.query.filter_by(approved=True).order_by(Report.created_at.desc()).all()
     return render_template("index.html", reports=reports)
 
-# ---------- Register ----------
+
+# ----- Register -----
 @app.route("/register", methods=["GET","POST"])
 def register():
     if request.method == "POST":
         username = request.form.get("username","").strip()
         password = request.form.get("password","")
-        question = request.form.get("question","").strip()
-        answer = request.form.get("answer","").strip()
+        question = request.form.get("question","")
+        answer = request.form.get("answer","")
 
         if not username or not password or not answer:
-            flash("Username, password and security answer are required.", "danger")
+            flash("Please fill username, password and security answer.", "danger")
             return redirect(url_for("register"))
 
         if User.query.filter_by(username=username).first():
@@ -87,7 +92,8 @@ def register():
         return redirect(url_for("login"))
     return render_template("register.html")
 
-# ---------- Login ----------
+
+# ----- Login -----
 @app.route("/login", methods=["GET","POST"])
 def login():
     if request.method == "POST":
@@ -105,7 +111,8 @@ def login():
             return redirect(url_for("login"))
     return render_template("login.html")
 
-# ---------- Logout ----------
+
+# ----- Logout -----
 @app.route("/logout")
 @login_required
 def logout():
@@ -113,57 +120,54 @@ def logout():
     flash("Logged out", "info")
     return redirect(url_for("index"))
 
-# ---------- Dashboard (shows admin unlock link) ----------
+
+# ----- Dashboard -----
 @app.route("/dashboard")
 @login_required
 def dashboard():
     reports = Report.query.filter_by(user_id=current_user.id).order_by(Report.created_at.desc()).all()
     return render_template("dashboard.html", reports=reports)
 
-# ---------- Admin unlock (secret) ----------
+
+# ----- Admin unlock (secret) accessible from first page -----
 @app.route("/admin_unlock", methods=["GET","POST"])
-@login_required
 def admin_unlock():
-    """
-    Allows a logged-in user to enter the secret code to unlock admin view.
-    The secret code is read from env var ADMIN_SECRET (recommended).
-    Default fallback is 'letmein' — change it in production.
-    """
+    # secret in env var ADMIN_SECRET, default 'letmein' (change it)
+    secret = os.environ.get("ADMIN_SECRET", "letmein")
     if request.method == "POST":
         code = request.form.get("code","")
-        secret = os.environ.get("ADMIN_SECRET", "letmein")
         if code == secret:
             session["admin_unlocked"] = True
             flash("Admin unlocked for this session.", "success")
             return redirect(url_for("admin"))
-        else:
-            flash("Wrong secret code.", "danger")
-            return redirect(url_for("admin_unlock"))
+        flash("Wrong secret code.", "danger")
+        return redirect(url_for("admin_unlock"))
     return render_template("admin_unlock.html")
+
 
 def admin_required(f):
     from functools import wraps
     @wraps(f)
     def wrapper(*args, **kwargs):
-        # allowed if user.is_admin OR session unlocked
-        unlocked = session.get("admin_unlocked", False)
-        if not current_user.is_authenticated:
+        if not current_user.is_authenticated and not session.get("admin_unlocked"):
+            # if not logged in and not unlocked, ask to unlock from first page
             abort(403)
-        if current_user.is_admin or unlocked:
+        # allow if user is admin OR session unlocked
+        if (current_user.is_authenticated and current_user.is_admin) or session.get("admin_unlocked"):
             return f(*args, **kwargs)
         abort(403)
     return wrapper
 
-# ---------- Admin page ----------
+
+# ----- Admin page -----
 @app.route("/admin")
-@login_required
 @admin_required
 def admin():
     reports = Report.query.order_by(Report.created_at.desc()).all()
     return render_template("admin.html", reports=reports)
 
+
 @app.route("/admin/approve/<int:report_id>", methods=["POST","GET"])
-@login_required
 @admin_required
 def admin_approve(report_id):
     r = Report.query.get_or_404(report_id)
@@ -172,15 +176,15 @@ def admin_approve(report_id):
     flash("Report approved.", "success")
     return redirect(url_for("admin"))
 
+
 @app.route("/admin/logins")
-@login_required
 @admin_required
 def admin_logins():
     logs = LoginLog.query.order_by(LoginLog.timestamp.desc()).all()
     return render_template("admin_logins.html", logs=logs)
 
+
 @app.route("/admin/export")
-@login_required
 @admin_required
 def admin_export():
     fname = "reports_export.csv"
@@ -203,7 +207,8 @@ def admin_export():
             })
     return send_from_directory(".", fname, as_attachment=True)
 
-# ---------- Profile ----------
+
+# ----- Profile -----
 @app.route("/profile", methods=["GET","POST"])
 @login_required
 def profile():
@@ -216,7 +221,8 @@ def profile():
         return redirect(url_for("profile"))
     return render_template("profile.html")
 
-# ---------- Report creation (with image upload) ----------
+
+# ----- Report submission (image upload + geolocation) -----
 @app.route("/report", methods=["GET","POST"])
 @login_required
 def report():
@@ -232,28 +238,29 @@ def report():
             lat = None
             lng = None
 
-        image_file = request.files.get("image")
+        image = request.files.get("image")
         filename = None
-        if image_file and image_file.filename:
-            if not allowed_file(image_file.filename):
+        if image and image.filename:
+            if not allowed_file(image.filename):
                 flash("Invalid image type", "danger")
                 return redirect(request.url)
-            filename = secure_filename(f"{int(datetime.utcnow().timestamp())}_{image_file.filename}")
-            image_file.save(os.path.join(app.config.get("UPLOAD_FOLDER","uploads"), filename))
+            filename = secure_filename(f"{int(datetime.utcnow().timestamp())}_{image.filename}")
+            image.save(os.path.join(app.config.get("UPLOAD_FOLDER","uploads"), filename))
 
-        rep = Report(
+        r = Report(
             title=title,
             details=details,
             image_filename=filename,
             lat=lat,
             lng=lng,
-            user_id=current_user.id
+            user_id=(current_user.id if current_user.is_authenticated else None)
         )
-        db.session.add(rep)
+        db.session.add(r)
         db.session.commit()
-        flash("Report submitted for approval", "success")
+        flash("Report submitted for review", "success")
         return redirect(url_for("dashboard"))
     return render_template("farmer_report.html")
+
 
 @app.route("/my-reports")
 @login_required
@@ -261,11 +268,13 @@ def my_reports():
     reports = Report.query.filter_by(user_id=current_user.id).order_by(Report.created_at.desc()).all()
     return render_template("farmer_reports.html", reports=reports)
 
+
 @app.route("/uploads/<path:filename>")
 def uploaded_file(filename):
     return send_from_directory(app.config.get("UPLOAD_FOLDER","uploads"), filename)
 
-# ---------- Reset password (security question verification) ----------
+
+# ----- Reset password (security question verification) -----
 @app.route("/reset-password", methods=["GET","POST"])
 def reset_password():
     if request.method == "POST":
@@ -299,9 +308,9 @@ def reset_password():
 
     return render_template("reset_password.html")
 
-# ---------- Chart stats endpoint (for admin charts) ----------
+
+# ----- simple stats for charts -----
 @app.route("/admin/stats")
-@login_required
 @admin_required
 def admin_stats():
     total_approved = Report.query.filter_by(approved=True).count()
@@ -316,16 +325,18 @@ def admin_stats():
         counts.append(num)
     return jsonify({"approved": total_approved, "pending": total_pending, "days": days, "counts": counts})
 
-# ---------- make_admin helper (optional) ----------
+
+# ----- helper route to promote user to admin (developer only) -----
 @app.route("/make_admin")
 @login_required
 def make_admin():
-    # WARNING: Only use briefly and remove later if in production
     current_user.is_admin = True
     db.session.commit()
-    return "You are now admin"
+    flash("You are now admin (temporary)", "success")
+    return redirect(url_for("dashboard"))
 
-# ---------- errors ----------
+
+# errors
 @app.errorhandler(403)
 def forbidden(e):
     return render_template("404.html", message="Forbidden (403)"), 403
