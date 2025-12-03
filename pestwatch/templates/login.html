@@ -1,28 +1,26 @@
-{% include "navbar.html" %}
-<div class="container">
-  <div class="grid">
-    <div class="left">
-      <div class="card">
-        <h2>Login</h2>
-        <form method="post" action="{{ url_for('login') }}">
-          <label>Username</label>
-          <input name="username" required>
-          <label>Password</label>
-          <input type="password" name="password" required>
-          <div style="margin-top:12px;">
-            <button class="btn-primary" type="submit">Login</button>
-            <a href="{{ url_for('reset') }}" class="small" style="margin-left:12px;">Forgot password?</a>
-          </div>
-        </form>
-      </div>
-    </div>
-    <div class="right">
-      <div class="card">
-        <h3>New here?</h3>
-        <p>Create an account to submit reports and track their status.</p>
-        <a class="btn-secondary" href="{{ url_for('register') }}">Create account</a>
-      </div>
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Login - PestWatch</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  {% include "navbar.html" %}
+  <div class="container">
+    <div class="card" style="max-width:640px;margin:auto;">
+      <h2>Login</h2>
+      <form method="post" action="{{ url_for('login') }}">
+        <label>Username</label>
+        <input class="form-control" name="username" required>
+        <label>Password</label>
+        <input class="form-control" type="password" name="password" required>
+        <div style="margin-top:12px;">
+          <button class="btn btn-primary" type="submit">Login</button>
+          <a class="small" style="margin-left:12px;" href="{{ url_for('reset') }}">Forgot password?</a>
+        </div>
+      </form>
     </div>
   </div>
-</div>
-
+</body>
+</html>
