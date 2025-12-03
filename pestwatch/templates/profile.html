@@ -1,12 +1,19 @@
-{% include "navbar.html" %}
-<div class="container">
-  <div class="card" style="max-width:700px;margin:auto;">
-    <h2>Your Profile</h2>
-    <form method="post" action="{{ url_for('profile') }}">
-      <label>Full name</label><input name="full_name" value="{{ current_user.full_name or '' }}">
-      <label>Email</label><input name="email" value="{{ current_user.email or '' }}">
-      <label>Phone</label><input name="phone" value="{{ current_user.phone or '' }}">
-      <div style="margin-top:12px;"><button class="btn-primary" type="submit">Save profile</button></div>
-    </form>
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Profile</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"></head>
+<body>
+  {% include "navbar.html" %}
+  <div class="container">
+    <div class="card" style="max-width:720px;margin:auto;">
+      <h2>Profile</h2>
+      <form method="post" action="{{ url_for('profile') }}">
+        <label>Full name</label><input class="form-control" name="full_name" value="{{ user.full_name or '' }}">
+        <label>Email</label><input class="form-control" name="email" value="{{ user.email or '' }}">
+        <label>Phone</label><input class="form-control" name="phone" value="{{ user.phone or '' }}">
+        <div style="margin-top:12px;"><button class="btn btn-primary" type="submit">Save</button></div>
+      </form>
+    </div>
   </div>
-</div>
+</body>
+</html>
