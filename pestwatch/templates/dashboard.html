@@ -1,12 +1,46 @@
 {% include "navbar.html" %}
 
-<div class="map-section">
-  <h2>Your Reports</h2>
+<div class="container">
+  <div class="left-col">
+    <h2>Your Reports</h2>
 
-  {% for r in reports %}
-  <div class="card">{{r.title}} — {{r.approved}}</div>
-  {% endfor %}
+    <a class="btn-primary" href="/report">Submit New Report</a>
+    <a class="btn-secondary" href="/profile">Edit Profile</a>
 
-  <br>
-  <a class="btn-primary" href="/report">Submit New Report</a>
+    {% if reports %}
+      <div class="cards">
+      {% for r in reports %}
+        <div class="card">
+          <div class="card-title">{{ r.title }}</div>
+          <div class="card-meta">
+            {{ r.created_at.strftime('%Y-%m-%d %H:%M') }} • Approved: {{ 'Yes' if r.approved else 'No' }}
+          </div>
+          <div class="card-body">{{ r.details }}</div>
+          {% if r.image_filename %}
+            <img src="{{ url_for('uploaded_file', filename=r.image_filename) }}" class="report-image">
+          {% endif %}
+          <div class="card-footer">Location: {% if r.lat and r.lng %}{{ r.lat }}, {{ r.lng }}{% else %}Not set{% endif %}</div>
+        </div>
+      {% endfor %}
+      </div>
+    {% else %}
+      <p>No reports yet.</p>
+    {% endif %}
+  </div>
+
+  <div class="right-col">
+    <h3>Quick Stats</h3>
+    <div id="mini-chart"></div>
+    <p><a class="btn" href="/my-reports">View all my reports</a></p>
+  </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/static/js/charts.js"></script>
+<script>
+  // fetch admin stats to show a small chart (works for users too)
+  fetch('/admin/stats').then(r=>r.json()).then(data=>{
+    // use Chart.js to render a small donut in #mini-chart
+    renderMiniChart('mini-chart', data.approved, data.pending);
+  }).catch(()=>{ /* ignore if fails */ });
+</script>
