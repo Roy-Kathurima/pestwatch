@@ -117,6 +117,37 @@ def login():
         log_login(username, ok)
     return render_template("login.html")
 
+@app.route("/reset-password", methods=["GET","POST"])
+def reset_password():
+    if request.method == "POST":
+        username = request.form["username"]
+        user = User.query.filter_by(username=username).first()
+
+        if not user:
+            flash("User not found")
+            return redirect("/reset-password")
+
+        if user.security_question != request.form["question"]:
+            flash("Wrong question selected")
+            return redirect("/reset-password")
+
+        if not user.check_answer(request.form["answer"]):
+            flash("Wrong answer")
+            return redirect("/reset-password")
+
+        if request.form["password"] != request.form["confirm"]:
+            flash("Passwords do not match")
+            return redirect("/reset-password")
+
+        user.set_password(request.form["password"])
+        db.session.commit()
+
+        flash("Password reset success. Login now.")
+        return redirect("/login")
+
+    return render_template("reset_password.html")
+
+
 @app.route("/logout")
 @login_required
 def logout():
@@ -311,4 +342,5 @@ def not_found(e):
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
+
 
