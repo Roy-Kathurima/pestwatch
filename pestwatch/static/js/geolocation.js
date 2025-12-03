@@ -1,10 +1,12 @@
 function useDeviceLocation() {
   if (!navigator.geolocation) { alert('Geolocation not supported'); return; }
   navigator.geolocation.getCurrentPosition(function(pos){
-    document.getElementById('lat').value = pos.coords.latitude;
-    document.getElementById('lng').value = pos.coords.longitude;
-    if (typeof deviceMarker !== 'undefined' && deviceMarker) {
-      deviceMarker.setLatLng([pos.coords.latitude, pos.coords.longitude]);
-    }
+    var lat = pos.coords.latitude;
+    var lng = pos.coords.longitude;
+    var latEl = document.getElementById('lat');
+    var lngEl = document.getElementById('lng');
+    if(latEl) latEl.value = lat;
+    if(lngEl) lngEl.value = lng;
+    alert('Device location applied to the form.');
   }, function(err){ alert('Unable to retrieve location: ' + err.message); }, { enableHighAccuracy:true });
 }
