@@ -1,40 +1,8 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Dashboard - PestWatch</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-</head>
-<body>
-  <div class="container">
-    {% include 'navbar.html' %}
-    <h2>Dashboard</h2>
+{% include "navbar.html" %}
+<h2>Your Reports</h2>
 
-    <p>Welcome, <strong>{{ current_user.username }}</strong></p>
+{% for r in reports %}
+{{r.title}} - {{r.approved}}<br>
+{% endfor %}
 
-    <div style="margin:12px 0;">
-      <a class="btn" href="{{ url_for('report') }}">Submit New Report</a>
-      <a class="btn" href="{{ url_for('my_reports') }}">View My Reports</a>
-    </div>
-
-    <h3>Your recent reports</h3>
-    {% if reports %}
-      <table>
-        <thead><tr><th>ID</th><th>Title</th><th>When</th><th>Approved</th></tr></thead>
-        <tbody>
-        {% for r in reports %}
-          <tr>
-            <td>{{ r.id }}</td>
-            <td>{{ r.title }}</td>
-            <td>{{ r.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
-            <td>{{ 'Yes' if r.approved else 'No' }}</td>
-          </tr>
-        {% endfor %}
-        </tbody>
-      </table>
-    {% else %}
-      <p>No reports yet.</p>
-    {% endif %}
-  </div>
-</body>
-</html>
+<a href="/report">Add Report</a>
