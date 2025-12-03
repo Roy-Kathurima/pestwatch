@@ -1,17 +1,48 @@
 {% include "navbar.html" %}
 
-<h2>Submit Report</h2>
+<div class="container">
+  <h2>Submit Pest Report</h2>
 
-<form method="post">
-<input name="title" placeholder="Title"><br>
-<textarea name="details"></textarea><br>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="flash {{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
 
-<button type="button" onclick="getLocation()">Use Device Location</button><br>
+  <form method="post" enctype="multipart/form-data">
+    <label>Title:<br><input name="title" required></label><br><br>
 
-<input id="lat" name="lat" placeholder="Latitude">
-<input id="lng" name="lng" placeholder="Longitude"><br>
+    <label>Details:<br><textarea name="details" rows="4"></textarea></label><br><br>
 
-<button>Submit</button>
-</form>
+    <label>Photo (optional):<br><input type="file" name="image" accept="image/*"></label><br><br>
 
-<script src="/static/js/geolocation.js"></script>
+    <div>
+      <button type="button" class="btn" onclick="useDeviceLocation()">Use device location</button>
+    </div><br>
+
+    <label>Latitude:<br><input id="lat" name="lat"></label><br><br>
+    <label>Longitude:<br><input id="lng" name="lng"></label><br><br>
+
+    <div id="map" style="height:320px; border-radius:8px;"></div><br>
+
+    <button class="btn-primary" type="submit">Submit Report</button>
+  </form>
+</div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="{{ url_for('static', filename='js/geolocation.js') }}"></script>
+
+<script>
+  // initialize leaflet map for the form
+  var map = L.map('map').setView([-1.286389,36.817223], 6);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+  var deviceMarker;
+  map.on('click', function(e){
+    document.getElementById('lat').value = e.latlng.lat.toFixed(6);
+    document.getElementById('lng').value = e.latlng.lng.toFixed(6);
+    if(deviceMarker) deviceMarker.setLatLng(e.latlng); else deviceMarker = L.marker(e.latlng).addTo(map);
+  });
+</script>
