@@ -1,8 +1,12 @@
 {% include "navbar.html" %}
-<h2>Your Reports</h2>
 
-{% for r in reports %}
-{{r.title}} - {{r.approved}}<br>
-{% endfor %}
+<div class="map-section">
+  <h2>Your Reports</h2>
 
-<a href="/report">Add Report</a>
+  {% for r in reports %}
+  <div class="card">{{r.title}} — {{r.approved}}</div>
+  {% endfor %}
+
+  <br>
+  <a class="btn-primary" href="/report">Submit New Report</a>
+</div>
