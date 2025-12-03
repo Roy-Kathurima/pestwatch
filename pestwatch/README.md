@@ -1,6 +1,10 @@
-PestWatch - Flask app
-- Register, login, report pests with photo & location
-- Admin unlock via secret, approve reports, view map & charts
-Deployment:
-- Set ADMIN_SECRET env var on Render
-- Ensure requirements.txt installed
+PESTWATCH SYSTEM
+---------------
+Admin Secret: pestadmin2025
+
+Features:
+- Reporting
+- Map
+- Approvals
+- CSV export
+- Password reset
