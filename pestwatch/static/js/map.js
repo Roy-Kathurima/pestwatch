@@ -1,12 +1,20 @@
 function loadMap(reports) {
-  var map = L.map("map").setView([-1.28, 36.82], 6);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+  try {
+    var mapEl = document.getElementById("map");
+    if (!mapEl) return;
+    var map = L.map("map").setView([-1.286389,36.817223], 6);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
 
-  if (!Array.isArray(reports)) return;
-  reports.forEach(r => {
-    if (r.lat && r.lng) {
-      L.marker([r.lat, r.lng]).addTo(map)
-        .bindPopup((r.title || 'Report') + "<br>" + (r.created_at || ""));
-    }
-  });
+    if (!Array.isArray(reports)) return;
+
+    reports.forEach(r => {
+      if (r.lat && r.lng) {
+        var marker = L.marker([r.lat, r.lng]).addTo(map);
+        var html = `<strong>${r.title || 'Report'}</strong><br>${r.details ? r.details.substring(0,120) + '...' : ''}`;
+        marker.bindPopup(html);
+      }
+    });
+  } catch (e) {
+    console.error("map load error", e);
+  }
 }
