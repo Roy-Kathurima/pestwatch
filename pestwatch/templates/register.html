@@ -1,10 +1,19 @@
 {% include "navbar.html" %}
 
-<div class="container">
-  <form method="post">
-    <h2>Register</h2>
-    <input name="username" placeholder="Username" required>
-    <input type="password" name="password" placeholder="Password" required>
-    <button class="btn-primary" type="submit">Create Account</button>
-  </form>
-</div>
+<form method="post">
+<h2>Create Account</h2>
+
+<input name="username" placeholder="Username" required>
+
+<input type="password" name="password" placeholder="Password" required>
+
+<select name="question">
+  <option value="pet">What is your first pet name?</option>
+  <option value="school">Name of your first school?</option>
+  <option value="birthplace">Where were you born?</option>
+</select>
+
+<input name="answer" placeholder="Security answer" required>
+
+<button>Create Account</button>
+</form>
