@@ -76,10 +76,10 @@ with app.app_context():
     db.create_all()
 
 # ---------------- ROUTES ----------------
-
 @app.route("/")
 def index():
-   reports = Report.query.filter_by(approved=True).order_by(Report.created.desc()).all()
+    reports = Report.query.filter_by(approved=True) \
+        .order_by(Report.created.desc()).all()
 
     return render_template("index.html", reports=reports)
 
@@ -343,6 +343,7 @@ def not_found(e):
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
+
 
 
 
