@@ -1,46 +1,39 @@
 {% include "navbar.html" %}
 
 <div class="container">
-  <div class="left-col">
-    <h2>Your Reports</h2>
 
-    <a class="btn-primary" href="/report">Submit New Report</a>
-    <a class="btn-secondary" href="/profile">Edit Profile</a>
+  {% if current_user.is_admin %}
+  <div class="admin-box">
+    <h3>Admin Control Panel</h3>
+    <p>Quick Admin Actions:</p>
+    <a href="/admin">Approve Reports</a><br><br>
+    <a href="/admin/logs">View Login Logs</a><br><br>
+    <a href="/admin/export">Export Database</a>
+  </div>
+  {% endif %}
 
-    {% if reports %}
-      <div class="cards">
-      {% for r in reports %}
-        <div class="card">
-          <div class="card-title">{{ r.title }}</div>
-          <div class="card-meta">
-            {{ r.created_at.strftime('%Y-%m-%d %H:%M') }} • Approved: {{ 'Yes' if r.approved else 'No' }}
-          </div>
-          <div class="card-body">{{ r.details }}</div>
-          {% if r.image_filename %}
-            <img src="{{ url_for('uploaded_file', filename=r.image_filename) }}" class="report-image">
+  <h2>My Pest Reports</h2>
+
+  {% if reports %}
+    {% for r in reports %}
+      <div class="card">
+        <h4>{{ r.title }}</h4>
+        <p>{{ r.details }}</p>
+        <small>Status:
+          {% if r.approved %}
+            <span style="color:green;">Approved</span>
+          {% else %}
+            <span style="color:red;">Pending</span>
           {% endif %}
-          <div class="card-footer">Location: {% if r.lat and r.lng %}{{ r.lat }}, {{ r.lng }}{% else %}Not set{% endif %}</div>
-        </div>
-      {% endfor %}
+        </small>
       </div>
-    {% else %}
-      <p>No reports yet.</p>
-    {% endif %}
-  </div>
+    {% endfor %}
+  {% else %}
+      <p>You have not submitted any reports yet.</p>
+  {% endif %}
 
-  <div class="right-col">
-    <h3>Quick Stats</h3>
-    <div id="mini-chart"></div>
-    <p><a class="btn" href="/my-reports">View all my reports</a></p>
-  </div>
+  <br>
+
+  <a class="btn-primary" href="/report">➕ Submit New Report</a>
+
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="/static/js/charts.js"></script>
-<script>
-  // fetch admin stats to show a small chart (works for users too)
-  fetch('/admin/stats').then(r=>r.json()).then(data=>{
-    // use Chart.js to render a small donut in #mini-chart
-    renderMiniChart('mini-chart', data.approved, data.pending);
-  }).catch(()=>{ /* ignore if fails */ });
-</script>
