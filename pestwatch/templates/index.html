@@ -1,30 +1,8 @@
-{% include "navbar.html" %}
+{% include 'navbar.html' %}
 <div class="container">
-  <div class="hero">
-    <div class="text">
-      <h1>PestWatch Kenya</h1>
-      <p>Report pest incidents on your farm — submit photos, attach location and track approvals.</p>
-      <div class="hero-actions">
-        <a href="{{ url_for('login') }}" class="btn-primary">Login</a>
-        <a href="{{ url_for('register') }}" class="btn-secondary">Register</a>
-      </div>
-      <div style="margin-top:12px;">
-        <a href="{{ url_for('admin_unlock') }}" class="admin-link small">Admin? Unlock here</a>
-      </div>
-    </div>
-  </div>
-
-  <section style="margin-top:18px;">
-    <h2>Latest approved reports</h2>
-    <div class="map-box card">
-      <div id="map"></div>
-    </div>
-  </section>
+<h2>Welcome to PestWatch</h2>
+<a href="/login"><button>Login</button></a>
+<a href="/register"><button>Register</button></a>
+<br><br>
+<a href="/admin-unlock">Admin Login</a>
 </div>
-
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script>
-  const reports = {{ (Report.query.filter_by(approved=True).order_by(Report.created_at.desc()).limit(100).all())|tojson }};
-  // the Report query above is evaluated when template renders by Flask; we used tojson to pass data
-</script>
-<script src="{{ url_for('static', filename='js/map.js') }}"></script>
