@@ -1,19 +1,21 @@
 {% include "navbar.html" %}
 
-<div class="container">
-  <h2>Login Logs</h2>
-
-  <table>
-    <thead><tr><th>ID</th><th>User</th><th>Success</th><th>Time</th></tr></thead>
-    <tbody>
-    {% for l in logs %}
-      <tr>
-        <td>{{ l.id }}</td>
-        <td>{{ l.username }}</td>
-        <td>{{ 'Yes' if l.success else 'No' }}</td>
-        <td>{{ l.time.strftime('%Y-%m-%d %H:%M:%S') }}</td>
-      </tr>
-    {% endfor %}
-    </tbody>
-  </table>
+<div class="container" style="margin-top:18px;">
+  <div class="card">
+    <h2>Login Logs</h2>
+    <table>
+      <thead><tr><th>ID</th><th>User</th><th>Success</th><th>IP</th><th>When</th></tr></thead>
+      <tbody>
+        {% for l in logs %}
+        <tr>
+          <td>{{ l.id }}</td>
+          <td>{{ l.username }}</td>
+          <td>{{ 'Yes' if l.success else 'No' }}</td>
+          <td>{{ l.ip_address }}</td>
+          <td>{{ l.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
