@@ -1,5 +1,7 @@
 {% include "navbar.html" %}
-<div class="container">
-  <h3>{{ message or "Page not found" }}</h3>
-  <a href="/">Home</a>
+<div class="container" style="margin-top:18px;">
+  <div class="card">
+    <h3>{{ message or "Page not found" }}</h3>
+    <p><a href="{{ url_for('index') }}">Back to home</a></p>
+  </div>
 </div>
