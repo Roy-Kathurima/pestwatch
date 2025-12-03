@@ -1,32 +1,6 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>My Reports - PestWatch</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-</head>
-<body>
-  <div class="container">
-    {% include 'navbar.html' %}
-    <h2>My Reports</h2>
+{% include "navbar.html" %}
+<h2>My Reports</h2>
 
-    {% if reports %}
-      <ul>
-      {% for r in reports %}
-        <li>
-          <strong>{{ r.title }}</strong> — {{ r.created_at.strftime('%Y-%m-%d %H:%M') }}<br>
-          {{ r.details }}<br>
-          {% if r.image_filename %}
-            <img src="{{ url_for('uploaded_file', filename=r.image_filename) }}" style="max-width:200px; display:block; margin-top:6px;">
-          {% endif %}
-          Location: {% if r.lat and r.lng %}{{ r.lat }}, {{ r.lng }}{% else %}Not provided{% endif %}
-          <hr>
-        </li>
-      {% endfor %}
-      </ul>
-    {% else %}
-      <p>No reports yet.</p>
-    {% endif %}
-  </div>
-</body>
-</html>
+{% for r in reports %}
+{{r.title}} - {{r.approved}}<br>
+{% endfor %}
