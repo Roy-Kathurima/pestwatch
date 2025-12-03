@@ -1,8 +1,7 @@
-# models.py
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
-from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
 
@@ -15,7 +14,6 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(200), nullable=True)
     phone = db.Column(db.String(40), nullable=True)
     is_admin = db.Column(db.Boolean, default=False)
-    # security question/answer (for free reset)
     security_question = db.Column(db.String(300), nullable=True)
     security_answer_hash = db.Column(db.String(300), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
