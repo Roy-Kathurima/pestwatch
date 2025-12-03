@@ -10,13 +10,14 @@ class User(UserMixin, db.Model):
     __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(256), nullable=False)
     full_name = db.Column(db.String(200), nullable=True)
     email = db.Column(db.String(200), nullable=True)
-    phone = db.Column(db.String(30), nullable=True)
-    password_hash = db.Column(db.String(256), nullable=False)
+    phone = db.Column(db.String(40), nullable=True)
     is_admin = db.Column(db.Boolean, default=False)
-    security_question = db.Column(db.String(200), nullable=True)
-    security_answer_hash = db.Column(db.String(256), nullable=True)
+    # security question/answer (for free reset)
+    security_question = db.Column(db.String(300), nullable=True)
+    security_answer_hash = db.Column(db.String(300), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     reports = db.relationship("Report", back_populates="user", cascade="all, delete-orphan")
@@ -56,7 +57,7 @@ class LoginLog(db.Model):
     __tablename__ = "login_logs"
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
-    username = db.Column(db.String(120))
+    username = db.Column(db.String(120), nullable=True)
     ip_address = db.Column(db.String(120), nullable=True)
     user_agent = db.Column(db.String(400), nullable=True)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
