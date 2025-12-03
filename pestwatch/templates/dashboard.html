@@ -2,38 +2,28 @@
 
 <div class="container">
 
-  {% if current_user.is_admin %}
   <div class="admin-box">
-    <h3>Admin Control Panel</h3>
-    <p>Quick Admin Actions:</p>
-    <a href="/admin">Approve Reports</a><br><br>
-    <a href="/admin/logs">View Login Logs</a><br><br>
-    <a href="/admin/export">Export Database</a>
+    <!-- admin access via secret -->
+    <p>If you are an admin or have the secret code, <a href="{{ url_for('admin_unlock') }}">unlock admin panel</a>.</p>
   </div>
-  {% endif %}
 
   <h2>My Pest Reports</h2>
 
   {% if reports %}
     {% for r in reports %}
       <div class="card">
-        <h4>{{ r.title }}</h4>
+        <h4>{{ r.title or '(no title)' }}</h4>
+        <div class="card-meta">{{ r.created_at.strftime('%Y-%m-%d %H:%M') }} • Approved: {{ 'Yes' if r.approved else 'No' }}</div>
         <p>{{ r.details }}</p>
-        <small>Status:
-          {% if r.approved %}
-            <span style="color:green;">Approved</span>
-          {% else %}
-            <span style="color:red;">Pending</span>
-          {% endif %}
-        </small>
+        {% if r.image_filename %}
+          <img src="{{ url_for('uploaded_file', filename=r.image_filename) }}" class="report-image">
+        {% endif %}
       </div>
     {% endfor %}
   {% else %}
-      <p>You have not submitted any reports yet.</p>
+    <p>You have not submitted any reports yet.</p>
   {% endif %}
 
-  <br>
-
-  <a class="btn-primary" href="/report">➕ Submit New Report</a>
+  <a class="btn-primary" href="{{ url_for('report') }}">➕ Submit New Report</a>
 
 </div>
