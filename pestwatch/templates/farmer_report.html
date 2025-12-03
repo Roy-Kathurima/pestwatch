@@ -1,33 +1,42 @@
-{% include "navbar.html" %}
-<div class="container">
-  <div class="card" style="max-width:900px; margin:auto;">
-    <h2>Submit Pest Report</h2>
-    <form method="post" enctype="multipart/form-data" action="{{ url_for('report') }}">
-      <label>Title</label>
-      <input name="title" required>
-      <label>Details</label>
-      <textarea name="details" rows="4"></textarea>
-      <label>Photo (optional)</label>
-      <input type="file" name="image" accept="image/*">
-      <div style="margin-top:8px;"><button type="button" class="btn-secondary" onclick="useDeviceLocation()">Use device location</button></div>
-      <label>Latitude</label><input id="lat" name="lat">
-      <label>Longitude</label><input id="lng" name="lng">
-      <div id="map" style="height:260px; margin-top:10px;"></div>
-      <div style="margin-top:12px;"><button class="btn-primary" type="submit">Submit report</button></div>
-    </form>
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Submit Report</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+</head>
+<body>
+  {% include "navbar.html" %}
+  <div class="container">
+    <div class="card" style="max-width:900px;margin:auto;">
+      <h2>Submit report</h2>
+      <form method="post" action="{{ url_for('report') }}" enctype="multipart/form-data">
+        <label>Title</label><input class="form-control" name="title" required>
+        <label>Details</label><textarea class="form-control" name="details" rows="4"></textarea>
+        <label>Photo (optional)</label><input class="form-control" type="file" name="image" accept="image/*">
+        <div style="margin-top:10px;">
+          <button type="button" class="btn btn-ghost" onclick="useDeviceLocation()">Use device location</button>
+        </div>
+        <label>Latitude</label><input class="form-control" id="lat" name="lat">
+        <label>Longitude</label><input class="form-control" id="lng" name="lng">
+        <div id="report-map" class="map-box" style="margin-top:10px;"></div>
+        <div style="margin-top:12px;"><button class="btn btn-primary" type="submit">Submit</button></div>
+      </form>
+    </div>
   </div>
-</div>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="{{ url_for('static', filename='js/geolocation.js') }}"></script>
-<script>
-  var m = L.map('map').setView([-1.286389,36.817223],6);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(m);
-  var marker;
-  m.on('click', function(e){
-    document.getElementById('lat').value = e.latlng.lat.toFixed(6);
-    document.getElementById('lng').value = e.latlng.lng.toFixed(6);
-    if(marker) marker.setLatLng(e.latlng); else marker = L.marker(e.latlng).addTo(m);
-  });
-</script>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="{{ url_for('static', filename='js/geolocation.js') }}"></script>
+  <script>
+    var m = L.map('report-map').setView([-1.286389,36.817223],6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(m);
+    var marker;
+    m.on('click', function(e){
+      var lat = e.latlng.lat.toFixed(6);
+      var lng = e.latlng.lng.toFixed(6);
+      document.getElementById('lat').value = lat;
+      document.getElementById('lng').value = lng;
+      if (marker) marker.setLatLng(e.latlng); else marker = L.marker(e.latlng).addTo(m);
+    });
+  </script>
+</body>
+</html>
