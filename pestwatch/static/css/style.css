@@ -1,26 +1,29 @@
-body{
-  background:#eef2f7;
-  font-family:Arial;
+/* Clean, centered, modern UI */
+* { box-sizing: border-box; }
+body { margin:0; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; background:#f4f7fb; color:#0f1724; }
+
+.nav { background: linear-gradient(90deg,#0b5560,#167f74); color:#fff; padding:12px 20px; display:flex; justify-content:space-between; align-items:center; }
+.nav .brand { font-weight:700; font-size:20px; }
+.nav .links a { color:#fff; margin-left:14px; text-decoration:none; font-weight:600; }
+.container { max-width:1100px; margin:24px auto; padding:0 14px; }
+.hero { background:#fff; padding:22px; border-radius:12px; display:flex; gap:20px; align-items:center; box-shadow:0 10px 20px rgba(10,20,30,0.06); }
+.hero h1 { margin:0; color:#0b5560; }
+.btn { display:inline-block; padding:10px 14px; border-radius:8px; border:none; cursor:pointer; font-weight:700; text-decoration:none; }
+.btn-primary { background:#167f74; color:#fff; }
+.btn-ghost { background:#fff; color:#0b5560; border:1px solid #e6eef0; }
+
+.grid { display:grid; grid-template-columns: 2fr 1fr; gap:18px; margin-top:18px; align-items:start; }
+.card { background:#fff; padding:16px; border-radius:10px; box-shadow:0 6px 18px rgba(10,20,30,0.04); }
+.form-control { width:100%; padding:10px; margin-top:8px; border-radius:8px; border:1px solid #e6eef0; }
+
+.report-image { width:100%; max-height:300px; object-fit:cover; border-radius:8px; margin-top:8px; }
+
+.table { width:100%; border-collapse:collapse; margin-top:12px; }
+.table th, .table td { padding:8px 10px; border-bottom:1px solid #f0f3f5; text-align:left; font-size:14px; }
+
+.small { font-size:13px; color:#64748b; }
+.map-box { height:420px; border-radius:8px; overflow:hidden; }
+@media (max-width:880px){
+  .grid { grid-template-columns:1fr; }
+  .hero { flex-direction:column; text-align:center; }
 }
-
-.container{
-  width:400px;
-  background:white;
-  margin:auto;
-  margin-top:80px;
-  padding:25px;
-  border-radius:10px;
-  box-shadow:0 10px 15px rgba(0,0,0,0.1);
-}
-
-h2{text-align:center;color:#333}
-
-input,button{
-  width:100%;
-  margin-top:10px;
-  padding:10px;
-}
-
-a{text-decoration:none;color:#2c7be5}
-button{background:#2c7be5;color:white;border:none}
-button:hover{background:#1a5cc5}
