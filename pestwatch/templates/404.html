@@ -1,2 +1,5 @@
-<h2>{{message}}</h2>
-<a href="/">Go Home</a>
+{% include "navbar.html" %}
+<div class="container">
+  <h3>{{ message or "Page not found" }}</h3>
+  <a href="/">Home</a>
+</div>
