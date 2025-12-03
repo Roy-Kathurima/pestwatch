@@ -1,4 +1,3 @@
-# app.py
 import os
 import csv
 from datetime import datetime, timedelta
@@ -15,12 +14,13 @@ import logging
 app = Flask(__name__)
 app.config.from_object(Config)
 
-# ensure upload folder exists
+# create uploads dir
 os.makedirs(app.config.get("UPLOAD_FOLDER", "uploads"), exist_ok=True)
 
 # init db
 db.init_app(app)
 
+# login manager
 login_manager = LoginManager()
 login_manager.login_view = "login"
 login_manager.init_app(app)
@@ -52,20 +52,17 @@ def log_login_attempt(username: str, user_obj, success: bool):
     db.session.add(log)
     db.session.commit()
 
-# create tables if not present
+# create tables
 with app.app_context():
     db.create_all()
 
-# ---------------- ROUTES ----------------
+# ---------- ROUTES ----------
 
 @app.route("/")
 def index():
-    # show hero + approved reports summary
     reports = Report.query.filter_by(approved=True).order_by(Report.created_at.desc()).all()
     return render_template("index.html", reports=reports)
 
-
-# ----- Register -----
 @app.route("/register", methods=["GET","POST"])
 def register():
     if request.method == "POST":
@@ -77,9 +74,8 @@ def register():
         if not username or not password or not answer:
             flash("Please fill username, password and security answer.", "danger")
             return redirect(url_for("register"))
-
         if User.query.filter_by(username=username).first():
-            flash("Username already exists", "danger")
+            flash("Username already exists.", "danger")
             return redirect(url_for("register"))
 
         u = User(username=username)
@@ -88,12 +84,11 @@ def register():
         u.set_security_answer(answer)
         db.session.add(u)
         db.session.commit()
-        flash("Account created. Please login.", "success")
+        flash("Account created — please login.", "success")
         return redirect(url_for("login"))
     return render_template("register.html")
 
 
-# ----- Login -----
 @app.route("/login", methods=["GET","POST"])
 def login():
     if request.method == "POST":
@@ -103,25 +98,23 @@ def login():
         if user and user.check_password(password):
             login_user(user)
             log_login_attempt(username, user, True)
-            flash("Logged in", "success")
+            flash("Welcome back!", "success")
             return redirect(url_for("dashboard"))
         else:
             log_login_attempt(username, user, False)
-            flash("Invalid credentials", "danger")
+            flash("Invalid username or password.", "danger")
             return redirect(url_for("login"))
     return render_template("login.html")
 
 
-# ----- Logout -----
 @app.route("/logout")
 @login_required
 def logout():
     logout_user()
-    flash("Logged out", "info")
+    flash("Logged out.", "info")
     return redirect(url_for("index"))
 
 
-# ----- Dashboard -----
 @app.route("/dashboard")
 @login_required
 def dashboard():
@@ -129,10 +122,8 @@ def dashboard():
     return render_template("dashboard.html", reports=reports)
 
 
-# ----- Admin unlock (secret) accessible from first page -----
 @app.route("/admin_unlock", methods=["GET","POST"])
 def admin_unlock():
-    # secret in env var ADMIN_SECRET, default 'letmein' (change it)
     secret = os.environ.get("ADMIN_SECRET", "letmein")
     if request.method == "POST":
         code = request.form.get("code","")
@@ -149,25 +140,25 @@ def admin_required(f):
     from functools import wraps
     @wraps(f)
     def wrapper(*args, **kwargs):
-        if not current_user.is_authenticated and not session.get("admin_unlocked"):
-            # if not logged in and not unlocked, ask to unlock from first page
-            abort(403)
-        # allow if user is admin OR session unlocked
-        if (current_user.is_authenticated and current_user.is_admin) or session.get("admin_unlocked"):
+        unlocked = session.get("admin_unlocked", False)
+        if current_user.is_authenticated and current_user.is_admin:
             return f(*args, **kwargs)
+        if unlocked:
+            return f(*args, **kwargs)
+        # if not logged in or not admin, ask to unlock from home page
         abort(403)
     return wrapper
 
 
-# ----- Admin page -----
 @app.route("/admin")
 @admin_required
 def admin():
     reports = Report.query.order_by(Report.created_at.desc()).all()
+    # use to show map + charts
     return render_template("admin.html", reports=reports)
 
 
-@app.route("/admin/approve/<int:report_id>", methods=["POST","GET"])
+@app.route("/admin/approve/<int:report_id>", methods=["POST"])
 @admin_required
 def admin_approve(report_id):
     r = Report.query.get_or_404(report_id)
@@ -208,7 +199,6 @@ def admin_export():
     return send_from_directory(".", fname, as_attachment=True)
 
 
-# ----- Profile -----
 @app.route("/profile", methods=["GET","POST"])
 @login_required
 def profile():
@@ -222,7 +212,6 @@ def profile():
     return render_template("profile.html")
 
 
-# ----- Report submission (image upload + geolocation) -----
 @app.route("/report", methods=["GET","POST"])
 @login_required
 def report():
@@ -238,14 +227,14 @@ def report():
             lat = None
             lng = None
 
-        image = request.files.get("image")
+        image_file = request.files.get("image")
         filename = None
-        if image and image.filename:
-            if not allowed_file(image.filename):
-                flash("Invalid image type", "danger")
+        if image_file and image_file.filename:
+            if not allowed_file(image_file.filename):
+                flash("Invalid image type.", "danger")
                 return redirect(request.url)
-            filename = secure_filename(f"{int(datetime.utcnow().timestamp())}_{image.filename}")
-            image.save(os.path.join(app.config.get("UPLOAD_FOLDER","uploads"), filename))
+            filename = secure_filename(f"{int(datetime.utcnow().timestamp())}_{image_file.filename}")
+            image_file.save(os.path.join(app.config.get("UPLOAD_FOLDER","uploads"), filename))
 
         r = Report(
             title=title,
@@ -253,11 +242,11 @@ def report():
             image_filename=filename,
             lat=lat,
             lng=lng,
-            user_id=(current_user.id if current_user.is_authenticated else None)
+            user_id=current_user.id
         )
         db.session.add(r)
         db.session.commit()
-        flash("Report submitted for review", "success")
+        flash("Report submitted for review.", "success")
         return redirect(url_for("dashboard"))
     return render_template("farmer_report.html")
 
@@ -274,7 +263,6 @@ def uploaded_file(filename):
     return send_from_directory(app.config.get("UPLOAD_FOLDER","uploads"), filename)
 
 
-# ----- Reset password (security question verification) -----
 @app.route("/reset-password", methods=["GET","POST"])
 def reset_password():
     if request.method == "POST":
@@ -309,7 +297,6 @@ def reset_password():
     return render_template("reset_password.html")
 
 
-# ----- simple stats for charts -----
 @app.route("/admin/stats")
 @admin_required
 def admin_stats():
@@ -326,17 +313,15 @@ def admin_stats():
     return jsonify({"approved": total_approved, "pending": total_pending, "days": days, "counts": counts})
 
 
-# ----- helper route to promote user to admin (developer only) -----
 @app.route("/make_admin")
 @login_required
 def make_admin():
     current_user.is_admin = True
     db.session.commit()
-    flash("You are now admin (temporary)", "success")
+    flash("You are now admin (temporary).", "success")
     return redirect(url_for("dashboard"))
 
 
-# errors
 @app.errorhandler(403)
 def forbidden(e):
     return render_template("404.html", message="Forbidden (403)"), 403
