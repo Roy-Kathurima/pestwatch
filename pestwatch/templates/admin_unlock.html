@@ -1,5 +1,13 @@
-<h1>Admin Access</h1>
-<form method="POST">
-<input name="secret" placeholder="Admin Secret Key" required>
-<button>Unlock</button>
-</form>
+{% include "navbar.html" %}
+<div class="container">
+  <div class="card" style="max-width:600px;margin:auto;">
+    <h2>Unlock Admin Panel</h2>
+    <form method="post" action="{{ url_for('admin_unlock') }}">
+      <label>Secret code</label>
+      <input name="code" required>
+      <div style="margin-top:10px;">
+        <button class="btn-primary" type="submit">Unlock</button>
+      </div>
+    </form>
+  </div>
+</div>
