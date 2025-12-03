@@ -1,26 +1,33 @@
 {% include "navbar.html" %}
 
 <section class="hero">
-  <h1>PestWatch Africa</h1>
-  <p>Smart pest reporting for farmers in real time</p>
+  <div class="hero-inner">
+    <h1>PestWatch Kenya</h1>
+    <p>Community pest reporting — submit, track and approve reports near you.</p>
 
-  <div class="hero-buttons">
-    <a href="/login" class="btn-primary">Login</a>
-    <a href="/register" class="btn-secondary">Register</a>
+    <div class="hero-actions">
+      <a href="/login" class="btn-primary">Login</a>
+      <a href="/register" class="btn-secondary">Register</a>
+    </div>
+
+    <div class="admin-quick">
+      <!-- visible admin link on first page -->
+      <a href="/admin_unlock" class="admin-link">Admin? unlock here</a>
+    </div>
   </div>
 </section>
 
 <section class="map-section">
-  <h2>Live Approved Reports</h2>
+  <h2>Live approved reports</h2>
   <div class="map-box">
-     <div id="map"></div>
+    <div id="map"></div>
   </div>
 </section>
 
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-
-<script src="/static/js/map.js"></script>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="{{ url_for('static', filename='js/map.js') }}"></script>
 <script>
-loadMap({{ reports|tojson }});
+  // load map with reports
+  loadMap({{ reports|tojson }});
 </script>
