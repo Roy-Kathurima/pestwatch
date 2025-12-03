@@ -1,16 +1,21 @@
-<nav>
-<a href="/">Home</a> |
-{% if current_user.is_authenticated %}
-<a href="/dashboard">Dashboard</a> |
-<a href="/logout">Logout</a>
-{% else %}
-<a href="/login">Login</a> |
-<a href="/register">Register</a>
-{% endif %}
-{% if current_user.is_authenticated and current_user.is_admin %}
- | <a href="/admin">Admin</a>
- | <a href="/admin/logs">Logs</a>
- | <a href="/admin/export">Export</a>
-{% endif %}
+<link rel="stylesheet" href="/static/css/style.css">
+
+<nav class="nav">
+  <div class="logo">🐛 PestWatch Kenya</div>
+
+  <div class="links">
+  <a href="/">Home</a>
+
+  {% if current_user.is_authenticated %}
+     <a href="/dashboard">Dashboard</a>
+     <a href="/logout">Logout</a>
+  {% else %}
+     <a href="/login">Login</a>
+     <a href="/register">Register</a>
+  {% endif %}
+
+  {% if current_user.is_authenticated and current_user.is_admin %}
+     <a href="/admin" class="admin">Admin</a>
+  {% endif %}
+  </div>
 </nav>
-<hr>
