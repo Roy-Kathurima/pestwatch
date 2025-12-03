@@ -85,20 +85,17 @@ def index():
 @app.route("/register", methods=["GET","POST"])
 def register():
     if request.method == "POST":
-        username = request.form.get("username","").strip()
-        password = request.form.get("password","")
-        if not username or not password:
-            flash("Username and password required", "danger")
-            return redirect(url_for("register"))
-        if User.query.filter_by(username=username).first():
-            flash("Username exists", "danger")
-            return redirect(url_for("register"))
-        u = User(username=username)
-        u.set_password(password)
-        db.session.add(u)
+        user = User(
+            username=request.form["username"],
+            security_question=request.form["question"]
+        )
+        user.set_password(request.form["password"])
+        user.set_answer(request.form["answer"])
+
+        db.session.add(user)
         db.session.commit()
-        flash("Registered — please login", "success")
-        return redirect(url_for("login"))
+        return redirect("/login")
+
     return render_template("register.html")
 
 @app.route("/login", methods=["GET","POST"])
@@ -314,3 +311,4 @@ def not_found(e):
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
+
