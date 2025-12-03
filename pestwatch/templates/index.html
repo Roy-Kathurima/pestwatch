@@ -1,14 +1,26 @@
 {% include "navbar.html" %}
 
-<h2>Approved Reports</h2>
+<section class="hero">
+  <h1>PestWatch Africa</h1>
+  <p>Smart pest reporting for farmers in real time</p>
 
-<div id="map"></div>
+  <div class="hero-buttons">
+    <a href="/login" class="btn-primary">Login</a>
+    <a href="/register" class="btn-secondary">Register</a>
+  </div>
+</section>
+
+<section class="map-section">
+  <h2>Live Approved Reports</h2>
+  <div class="map-box">
+     <div id="map"></div>
+  </div>
+</section>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 
 <script src="/static/js/map.js"></script>
 <script>
-let reports = {{ reports|tojson }};
-loadMap(reports);
+loadMap({{ reports|tojson }});
 </script>
