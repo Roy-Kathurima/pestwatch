@@ -1,14 +1,5 @@
-{% include "navbar.html" %}
-
-<div class="container" style="margin-top:18px;">
-  <div class="card">
-    <h2>Unlock Admin</h2>
-    <p>Enter the secret admin code to open the admin panel (session unlock).</p>
-    <form method="post">
-      <input name="code" placeholder="Secret code" required>
-      <div style="margin-top:10px;">
-        <button class="btn-primary" type="submit">Unlock</button>
-      </div>
-    </form>
-  </div>
-</div>
+<h1>Admin Access</h1>
+<form method="POST">
+<input name="secret" placeholder="Admin Secret Key" required>
+<button>Unlock</button>
+</form>
