@@ -5,19 +5,13 @@ function renderStatusChart(canvasId, approved, pending) {
     data: {
       labels: ['Approved','Pending'],
       datasets: [{ data: [approved, pending], backgroundColor:['#2e8b57','#ff9f43'] }]
-    },
-    options: { responsive:true, maintainAspectRatio:false }
+    }
   });
 }
-
 function renderLineChart(canvasId, labels, values) {
   if (!document.getElementById(canvasId)) return;
   new Chart(document.getElementById(canvasId), {
     type: 'line',
-    data: {
-      labels: labels,
-      datasets: [{ label:'Reports', data: values, fill:true, backgroundColor:'rgba(46,139,87,0.12)', borderColor:'#2e8b57', tension:0.2 }]
-    },
-    options:{ responsive:true, maintainAspectRatio:false }
+    data: { labels: labels, datasets: [{ label:'Reports', data: values, fill:true, backgroundColor:'rgba(46,139,87,0.12)', borderColor:'#2e8b57', tension:0.2 }] }
   });
 }
