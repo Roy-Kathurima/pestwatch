@@ -1,20 +1,6 @@
-\# PestWatch
-
-
-
-Simple Flask app (farmers report pests). Features:
-
-\- Farmers register/login, submit reports with photo + geolocation
-
-\- Interactive Leaflet maps
-
-\- Admin approval, login logs and CSV export
-
-\- No command-line needed to create admin: /make\_admin?user=USERNAME
-
-
-
-Deploy: push to GitHub, connect repo to Render, set build to pip install -r requirements.txt and start as `gunicorn app:app`.
-
-
-
+PestWatch - Flask app
+- Register, login, report pests with photo & location
+- Admin unlock via secret, approve reports, view map & charts
+Deployment:
+- Set ADMIN_SECRET env var on Render
+- Ensure requirements.txt installed
