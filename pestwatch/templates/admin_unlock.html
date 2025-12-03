@@ -1,10 +1,14 @@
 {% include "navbar.html" %}
 
-<div class="container">
-  <h2>Unlock Admin</h2>
-  <p>Enter secret code to access admin features for this session.</p>
-  <form method="post">
-    <input name="code" placeholder="Secret code" required>
-    <button class="btn-primary" type="submit">Unlock</button>
-  </form>
+<div class="container" style="margin-top:18px;">
+  <div class="card">
+    <h2>Unlock Admin</h2>
+    <p>Enter the secret admin code to open the admin panel (session unlock).</p>
+    <form method="post">
+      <input name="code" placeholder="Secret code" required>
+      <div style="margin-top:10px;">
+        <button class="btn-primary" type="submit">Unlock</button>
+      </div>
+    </form>
+  </div>
 </div>
