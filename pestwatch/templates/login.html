@@ -1,27 +1,8 @@
-{% include "navbar.html" %}
-
-<div class="container" style="margin-top:18px;">
-  <div class="left">
-    <div class="card">
-      <h2>Login</h2>
-      <form method="post">
-        <label>Username</label>
-        <input name="username" required>
-        <label>Password</label>
-        <input type="password" name="password" required>
-        <div style="margin-top:12px;">
-          <button class="btn-primary" type="submit">Login</button>
-          <a href="{{ url_for('reset_password') }}" style="margin-left:12px;" class="small">Forgot password?</a>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <div class="right">
-    <div class="card">
-      <h3>New here?</h3>
-      <p>Create an account to submit reports and track your submissions.</p>
-      <a class="btn-secondary" href="{{ url_for('register') }}">Create account</a>
-    </div>
-  </div>
-</div>
+<h1>PestWatch</h1>
+<form method="POST">
+<input name="username" placeholder="Username" required>
+<input type="password" name="password" placeholder="Password" required>
+<button>Login</button>
+<p><a href="/register">Register</a> | <a href="/reset_password">Forgot Password?</a></p>
+<p><a href="/admin_unlock">Admin Login</a></p>
+</form>
