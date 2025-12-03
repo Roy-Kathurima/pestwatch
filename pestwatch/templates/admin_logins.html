@@ -1,20 +1,27 @@
-{% include "navbar.html" %}
-<div class="container">
-  <div class="card">
-    <h2>Login Logs</h2>
-    <table>
-      <thead><tr><th>ID</th><th>Username</th><th>Success</th><th>IP</th><th>When</th></tr></thead>
-      <tbody>
-        {% for l in logs %}
-        <tr>
-          <td>{{ l.id }}</td>
-          <td>{{ l.username }}</td>
-          <td>{{ 'Yes' if l.success else 'No' }}</td>
-          <td>{{ l.ip_address }}</td>
-          <td>{{ l.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Login Logs</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"></head>
+<body>
+  {% include "navbar.html" %}
+  <div class="container">
+    <div class="card">
+      <h2>Login logs</h2>
+      <table class="table">
+        <thead><tr><th>ID</th><th>User</th><th>IP</th><th>Success</th><th>When</th></tr></thead>
+        <tbody>
+          {% for l in logs %}
+          <tr>
+            <td>{{ l.id }}</td>
+            <td>{{ l.username }}</td>
+            <td>{{ l.ip_address }}</td>
+            <td>{{ 'Yes' if l.success else 'No' }}</td>
+            <td>{{ l.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
-</div>
+</body>
+</html>
