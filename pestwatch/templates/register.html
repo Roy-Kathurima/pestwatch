@@ -1,36 +1,28 @@
-{% include "navbar.html" %}
-<div class="container">
-  <div class="grid">
-    <div class="left">
-      <div class="card">
-        <h2>Register</h2>
-        <form method="post" action="{{ url_for('register') }}">
-          <label>Username</label>
-          <input name="username" required>
-          <label>Password</label>
-          <input type="password" name="password" required>
-          <label>Security question</label>
-          <select name="question">
-            <option value="pet">What was your first pet's name?</option>
-            <option value="school">Name of your first school?</option>
-            <option value="birthplace">Where were you born?</option>
-          </select>
-          <label>Answer</label>
-          <input name="answer" required>
-          <div style="margin-top:12px;">
-            <button class="btn-primary" type="submit">Create account</button>
-          </div>
-        </form>
-      </div>
-    </div>
-    <div class="right">
-      <div class="card">
-        <h3>Why register?</h3>
-        <ul class="small">
-          <li>Submit reports with photos & location</li>
-          <li>Track approval status</li>
-        </ul>
-      </div>
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Register</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"></head>
+<body>
+  {% include "navbar.html" %}
+  <div class="container">
+    <div class="card" style="max-width:720px;margin:auto;">
+      <h2>Create account</h2>
+      <form method="post" action="{{ url_for('register') }}">
+        <label>Username</label>
+        <input class="form-control" name="username" required>
+        <label>Password</label>
+        <input class="form-control" type="password" name="password" required>
+        <label>Security question</label>
+        <select class="form-control" name="question">
+          <option value="pet">What was your first pet's name?</option>
+          <option value="school">What school did you attend?</option>
+          <option value="birthplace">Where were you born?</option>
+        </select>
+        <label>Answer</label>
+        <input class="form-control" name="answer" required>
+        <div style="margin-top:12px;"><button class="btn btn-primary" type="submit">Register</button></div>
+      </form>
     </div>
   </div>
-</div>
+</body>
+</html>
