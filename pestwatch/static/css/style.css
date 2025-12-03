@@ -40,3 +40,12 @@ table th, table td { padding:10px; border-bottom:1px solid #eee; text-align:left
 .flash { padding:10px; border-radius:6px; margin-bottom:12px; }
 .flash.success { background:#e6f9ef; color:#134d34; }
 .flash.danger { background:#ffecee; color:#5b1b1b; }
+
+.admin-box {
+  background: #fff3cd;
+  padding: 15px;
+  margin: 20px;
+  border-left: 6px solid orange;
+}
+
+
